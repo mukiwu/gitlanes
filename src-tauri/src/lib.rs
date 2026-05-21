@@ -382,7 +382,10 @@ async fn git_commit(state: State<'_, AppState>, message: String) -> Result<serde
 }
 
 fn parse_refs(decoration: &str) -> Vec<GitRef> {
-    let trimmed = decoration.trim().trim_start_matches('(').trim_end_matches(')').trim();
+    let outer = decoration.trim();
+    let outer = outer.strip_prefix('(').unwrap_or(outer);
+    let outer = outer.strip_suffix(')').unwrap_or(outer);
+    let trimmed = outer.trim();
     if trimmed.is_empty() {
         return Vec::new();
     }
@@ -413,7 +416,8 @@ fn parse_refs(decoration: &str) -> Vec<GitRef> {
             if let Some(rest) = token.strip_prefix("refs/tags/") {
                 return Some(GitRef { name: rest.to_string(), kind: "tag".to_string() });
             }
-            Some(GitRef { name: token.to_string(), kind: "branch".to_string() })
+            // Unknown namespace (e.g. refs/notes, stash) — not a deletable branch/tag.
+            Some(GitRef { name: token.to_string(), kind: "unknown".to_string() })
         })
         .collect()
 }
