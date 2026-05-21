@@ -1828,12 +1828,10 @@ export default function App() {
       )}
 
       {/* Main workspace nav bar */}
-      <nav id="workspace-nav" className="px-6 py-3.5 bg-slate-900 border-b border-slate-800 flex items-center shrink-0 gap-3">
-        {/* Center area: fills the space left of the action buttons and centers the branch/repo selector;
-            the path truncates here instead of ever overlapping the buttons. */}
-        <div className="flex-1 min-w-0 flex justify-center">
-        {/* Branch / repo selector */}
-        <div className="relative flex items-center min-w-0 max-w-full z-10">
+      <nav id="workspace-nav" className="relative px-6 py-3.5 bg-slate-900 border-b border-slate-800 flex items-center justify-end shrink-0 gap-3 min-h-[57px]">
+        {/* Branch / repo selector — absolutely centered on the viewport.
+            max-w leaves room for the right-aligned action group so the path truncates instead of overlapping. */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center min-w-0 max-w-[calc(100%-34rem)] z-10">
           <button
             onClick={() => setIsRepoPanelOpen((v) => !v)}
             title={t.switchRepo}
@@ -1851,7 +1849,6 @@ export default function App() {
             <ChevronDown className={`h-3.5 w-3.5 text-slate-500 shrink-0 transition-transform ${isRepoPanelOpen ? "rotate-180" : ""}`} />
           </button>
           {isRepoPanelOpen && renderRepoPanel()}
-        </div>
         </div>
 
         {/* Action controllers: right side (sync, checkout, merge & settings). */}
