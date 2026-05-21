@@ -108,9 +108,12 @@ pub async fn ai_generate(
         AiProvider::Gemini => {
             let key = api_key.ok_or_else(|| "Gemini API key is not set.".to_string())?;
             let url = format!(
-                "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+                "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
             );
-            client.post(url).json(&build_gemini_body(prompt, system))
+            client
+                .post(url)
+                .header("x-goog-api-key", key)
+                .json(&build_gemini_body(prompt, system))
         }
         AiProvider::OpenAI => {
             let key = api_key.ok_or_else(|| "OpenAI API key is not set.".to_string())?;
@@ -151,7 +154,7 @@ pub async fn ai_generate(
         .json()
         .await
         .map_err(|err| sanitize_error(&err.to_string(), api_key))?;
-    parse_response(provider, &json)
+    parse_response(provider, &json).map_err(|err| sanitize_error(&err, api_key))
 }
 
 #[cfg(test)]
