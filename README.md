@@ -26,13 +26,11 @@ Build output:
 - `src-tauri/target/release/bundle/macos/Git GUI.app`
 - `src-tauri/target/release/bundle/dmg/Git GUI_0.1.0_aarch64.dmg`
 
-## Gemini Features
+## AI Features
 
-AI commit-message and diff explanation features read `GEMINI_API_KEY` from the environment or a local `.env` file.
-
-```bash
-GEMINI_API_KEY=your_key npm run dev
-```
+AI commit-message and diff explanation are configured in-app via the gear menu → "AI Settings".
+Choose a provider (Gemini / OpenAI / Anthropic / Ollama), pick a model, and paste your API key.
+Keys are stored in the OS keychain and never written to disk or logs.
 
 ## Legacy Web Server
 

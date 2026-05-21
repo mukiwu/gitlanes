@@ -30,6 +30,7 @@ import { GitFile, CommitNode, Branch, StashItem } from "./types";
 import { GitGraph } from "./components/GitGraph";
 import { CodeEditor } from "./components/CodeEditor";
 import { DiffViewer } from "./components/DiffViewer";
+import { AiSettingsModal, AiSettingsLabels } from "./components/AiSettingsModal";
 
 type Language = "en" | "zh";
 
@@ -97,7 +98,7 @@ const translations = {
     popStash: "Pop Stash",
     stashPlaceholder: "Stash label message...",
     stash: "Stash",
-    geminiSuggestion: "Gemini Suggestion",
+    geminiSuggestion: "AI Suggestion",
     commitPlaceholder: "Write conventional commit message...",
     commitLabel: "Commit",
     closeLog: "Close Log",
@@ -136,7 +137,7 @@ const translations = {
     toastCommitRecorded: "Commit recorded in repository DAG log!",
     toastCommitFailed: "Failed to commit. Ensure changes are staged.",
     toastNoFilesStaged: "No files staged! Add or stage some modifications first before generating AI messages.",
-    toastAiCommitDone: "Gemini compiled a standard conventional commit message based on staged diff changes!",
+    toastAiCommitDone: "AI compiled a standard conventional commit message based on staged diff changes!",
     toastAiCommitFailed: "Could not generate commit message.",
     toastResetFailed: "Failed to reset.",
     toastRevertFailed: "Failed to revert commit.",
@@ -161,6 +162,21 @@ const translations = {
     confirmRevertTitle: (hash: string) => `Revert Commit ${hash}?`,
     confirmRevertMessage: "This runs 'git revert --no-edit'. A new commit will be automatically created that cleanly rollbacks / cancels the edits in this selected commit.",
     confirmRevertBtn: "Confirm Revert",
+    aiSettings: "AI Settings",
+    aiSettingsTitle: "AI Settings",
+    aiProvider: "Provider",
+    aiModel: "Model",
+    aiCustomModel: "Custom…",
+    aiApiKey: "API Key",
+    aiEndpoint: "Endpoint URL",
+    aiClearKey: "Clear",
+    aiTest: "Test Connection",
+    aiTesting: "Testing…",
+    aiTestOk: "Connection succeeded",
+    aiCancel: "Cancel",
+    aiSave: "Save",
+    aiKeyStoredHint: "A key is stored. Leave blank to keep it.",
+    toastSetupAiFirst: "Please set up an AI provider first.",
   },
   zh: {
     appTitle: "GitLanes",
@@ -214,7 +230,7 @@ const translations = {
     popStash: "取出 Stash",
     stashPlaceholder: "Stash 標籤訊息...",
     stash: "Stash",
-    geminiSuggestion: "Gemini 建議",
+    geminiSuggestion: "AI 建議",
     commitPlaceholder: "輸入 conventional commit 訊息...",
     commitLabel: "Commit",
     closeLog: "關閉",
@@ -253,7 +269,7 @@ const translations = {
     toastCommitRecorded: "Commit 已記錄到儲存庫！",
     toastCommitFailed: "Commit 失敗。請確認變更已 stage。",
     toastNoFilesStaged: "尚未 stage 任何檔案！請先 stage 一些修改再產生 AI 訊息。",
-    toastAiCommitDone: "Gemini 已根據已 stage 的 diff 產生 conventional commit 訊息！",
+    toastAiCommitDone: "AI 已根據已 stage 的 diff 產生 conventional commit 訊息！",
     toastAiCommitFailed: "無法產生 commit 訊息。",
     toastResetFailed: "Reset 失敗。",
     toastRevertFailed: "Revert commit 失敗。",
@@ -278,6 +294,21 @@ const translations = {
     confirmRevertTitle: (hash: string) => `Revert commit ${hash}？`,
     confirmRevertMessage: "這會執行 'git revert --no-edit'。系統會自動建立一個新 commit，乾淨地回復／取消此 commit 的變更。",
     confirmRevertBtn: "確認 Revert",
+    aiSettings: "AI 設定",
+    aiSettingsTitle: "AI 設定",
+    aiProvider: "供應商",
+    aiModel: "模型",
+    aiCustomModel: "自訂…",
+    aiApiKey: "API Key",
+    aiEndpoint: "Endpoint URL",
+    aiClearKey: "清除",
+    aiTest: "測試連線",
+    aiTesting: "測試中…",
+    aiTestOk: "連線成功",
+    aiCancel: "取消",
+    aiSave: "儲存",
+    aiKeyStoredHint: "已儲存金鑰，留空則保留現有金鑰。",
+    toastSetupAiFirst: "請先設定 AI provider。",
   },
 };
 
@@ -303,6 +334,7 @@ export default function App() {
   const [isRepoSidebarCollapsed, setIsRepoSidebarCollapsed] = useState<boolean>(false);
   const [isRepoPanelOpen, setIsRepoPanelOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isAiSettingsOpen, setIsAiSettingsOpen] = useState<boolean>(false);
   const [currentBranch, setCurrentBranch] = useState<string>("main");
   const [gitFiles, setGitFiles] = useState<GitFile[]>([]);
   const [commits, setCommits] = useState<CommitNode[]>([]);
@@ -845,7 +877,7 @@ export default function App() {
     }
   };
 
-  // 5. Commit with Gemini AI Message generation
+  // 5. Commit with AI message generation
   const handleCommit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commitMessage.trim()) {
@@ -879,13 +911,26 @@ export default function App() {
       return;
     }
 
+    try {
+      const settingsRes = await fetch("/api/ai/settings");
+      if (!settingsRes.ok) throw new Error("Could not load AI settings");
+      const settings = await settingsRes.json();
+      if (!settings.hasKey) {
+        showToast(t.toastSetupAiFirst, true);
+        setIsAiSettingsOpen(true);
+        return;
+      }
+    } catch {
+      showToast(t.toastSetupAiFirst, true);
+      setIsAiSettingsOpen(true);
+      return;
+    }
+
     setIsAiLoading(true);
     try {
-      const res = await fetch("/api/git/ai/commit-message", {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("Could not invoke Gemini API.");
+      const res = await fetch("/api/git/ai/commit-message", { method: "POST" });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not invoke AI provider.");
       if (data.error) throw new Error(data.error);
 
       setCommitMessage(data.message);
@@ -1330,7 +1375,7 @@ export default function App() {
         </div>
 
         <footer className="py-4 text-center border-t border-slate-900 bg-slate-950 text-[11px] text-slate-600 font-mono">
-          Powered by Tauri, local Git, and Gemini
+          Powered by Tauri, local Git, and AI
         </footer>
       </div>
     );
@@ -1457,6 +1502,17 @@ export default function App() {
                       {language === "en" ? "中文" : "EN"}
                     </button>
                   </div>
+
+                  <button
+                    onClick={() => {
+                      setIsSettingsOpen(false);
+                      setIsAiSettingsOpen(true);
+                    }}
+                    className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs text-slate-300 hover:bg-slate-800/60 rounded font-mono cursor-pointer"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+                    {t.aiSettings}
+                  </button>
 
                   <div className="my-1 border-t border-slate-800" />
 
@@ -1738,6 +1794,10 @@ export default function App() {
                 file={diffTarget.path}
                 staged={diffTarget.staged}
                 onClose={() => setDiffTarget(null)}
+                onNeedAiSetup={() => {
+                  showToast(t.toastSetupAiFirst, true);
+                  setIsAiSettingsOpen(true);
+                }}
               />
             ) : selectedCommit ? (
               /* Selected commit historical inspector panel */
@@ -1961,6 +2021,26 @@ export default function App() {
         </div>
         <span>{t.refreshedAt} {new Date().toLocaleTimeString()}</span>
       </footer>
+
+      <AiSettingsModal
+        open={isAiSettingsOpen}
+        onClose={() => setIsAiSettingsOpen(false)}
+        labels={{
+          title: t.aiSettingsTitle,
+          provider: t.aiProvider,
+          model: t.aiModel,
+          custom: t.aiCustomModel,
+          apiKey: t.aiApiKey,
+          endpoint: t.aiEndpoint,
+          clear: t.aiClearKey,
+          test: t.aiTest,
+          testing: t.aiTesting,
+          testOk: t.aiTestOk,
+          cancel: t.aiCancel,
+          save: t.aiSave,
+          keyStoredHint: t.aiKeyStoredHint,
+        } satisfies AiSettingsLabels}
+      />
 
       {/* Custom Confirmation Dialog Overlay */}
       {confirmModal.isOpen && (

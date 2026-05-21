@@ -14,7 +14,6 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
-dotenvy = "0.15"
 anyhow = "1"
 reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
 serde = { version = "1", features = ["derive"] }
@@ -23,3 +22,4 @@ tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 thiserror = "2"
 ignore = "0.4"
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
