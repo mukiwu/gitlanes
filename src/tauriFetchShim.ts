@@ -80,12 +80,30 @@ if (isTauriRuntime) {
         return invokeJson("git_branch_checkout", { name: body.name });
       case "/api/git/branch/merge":
         return invokeJson("git_branch_merge", { name: body.name });
+      case "/api/git/cherry-pick":
+        return invokeJson("git_cherry_pick", { commit: body.commit });
+      case "/api/git/tag/create":
+        return invokeJson("git_tag_create", { name: body.name, commit: body.commit, message: body.message });
+      case "/api/git/branch/create-at":
+        return invokeJson("git_branch_create_at", { name: body.name, commit: body.commit });
+      case "/api/git/tag/delete":
+        return invokeJson("git_tag_delete", { name: body.name });
+      case "/api/git/branch/delete":
+        return invokeJson("git_branch_delete", { name: body.name, force: body.force });
+      case "/api/git/branch/rename":
+        return invokeJson("git_branch_rename", { oldName: body.oldName, newName: body.newName });
       case "/api/git/history":
         return invokeJson("git_history");
       case "/api/git/reset":
         return invokeJson("git_reset", { commit: body.commit, mode: body.mode });
       case "/api/git/revert":
         return invokeJson("git_revert", { commit: body.commit });
+      case "/api/git/push":
+        return invokeJson("git_push");
+      case "/api/git/pull":
+        return invokeJson("git_pull");
+      case "/api/git/fetch":
+        return invokeJson("git_fetch");
       case "/api/sandbox/files":
         return invokeJson("sandbox_files");
       case "/api/sandbox/files/write":

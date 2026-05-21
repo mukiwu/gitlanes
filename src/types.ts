@@ -14,6 +14,7 @@ export interface CommitNode {
   author: string;
   date: string;
   message: string;
+  refs: { name: string; kind: string }[];
 }
 
 export interface Branch {

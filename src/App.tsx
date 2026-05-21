@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { 
+import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
   FolderOpen,
-  GitBranch, 
-  GitCommit, 
-  Plus, 
-  RefreshCw, 
-  Check, 
-  X, 
-  AlertTriangle, 
-  File, 
-  Sparkles, 
-  Inbox, 
-  Play, 
+  GitBranch,
+  GitCommit,
+  Plus,
+  RefreshCw,
+  DownloadCloud,
+  Download,
+  Upload,
+  Check,
+  X,
+  AlertTriangle,
+  File,
+  Sparkles,
+  Inbox,
+  Play,
   HelpCircle,
   GitPullRequest,
   BookOpen,
@@ -31,6 +34,10 @@ import { GitGraph } from "./components/GitGraph";
 import { CodeEditor } from "./components/CodeEditor";
 import { DiffViewer } from "./components/DiffViewer";
 import { AiSettingsModal, AiSettingsLabels } from "./components/AiSettingsModal";
+import { CommitContextMenu, CommitContextMenuItem } from "./components/CommitContextMenu";
+import { CommitInputModal } from "./components/CommitInputModal";
+import { Resizer } from "./components/Resizer";
+import { TerminalPanel, TerminalPanelLabels } from "./components/TerminalPanel";
 
 type Language = "en" | "zh";
 
@@ -74,7 +81,6 @@ const translations = {
     settingsLanguage: "Language",
     closeRepoTitle: "Close Repository?",
     closeRepoMessage: "This closes the current repository in the app. It will not delete local files or Git history.",
-    refresh: "Refresh repository changes",
     checkout: "Checkout:",
     merge: "Merge",
     mergeWith: "Merge with...",
@@ -104,7 +110,6 @@ const translations = {
     authorLabel: "Author",
     dateLabel: "Date",
     subjectLabel: "Subject Description",
-    workspaceActions: "Workspace Actions",
     workspaceTitle: "Workspace",
     emptyFolder: "Empty folder",
     codeEditorTitle: "Workspace Code Editor",
@@ -149,16 +154,16 @@ const translations = {
     toastReverted: (hash: string) => `Successfully reverted commit ${hash}!`,
     toastCheckedOut: (hash: string) => `Successfully checked out HEAD to commit ${hash}`,
     confirmCheckoutTitle: (hash: string) => `Hard Checkout HEAD to Commit ${hash}?`,
-    confirmCheckoutMessage: "Are you sure you want to hard checkout HEAD to this commit? Warning: Stashed and uncommitted modifications in this repository will be overwritten.",
+    confirmCheckoutMessage: "Switches your working copy to this commit to inspect it (detached HEAD) — you won't be on any branch. New commits made here can be lost unless you create a branch to keep them.",
     confirmCheckoutBtn: "Confirm Checkout",
     confirmHardResetTitle: (hash: string) => `Hard Reset HEAD to Commit ${hash}?`,
-    confirmHardResetMessage: "WARNING: This runs 'git reset --hard'. Any modified/uncommitted playground codes and files WILL be deleted permanently to match this commit state.",
+    confirmHardResetMessage: "⚠️ Moves your current branch back to this commit and DISCARDS every commit after it as well as any uncommitted changes. This cannot be undone — please be sure.",
     confirmHardResetBtn: "Confirm Hard Reset",
     confirmSoftResetTitle: (hash: string) => `Soft Reset HEAD to Commit ${hash}?`,
-    confirmSoftResetMessage: "This runs 'git reset --soft'. Your active modifications are kept, but the HEAD is moved back to this commit so you can re-commit changes.",
+    confirmSoftResetMessage: "Moves your current branch back to this commit, but keeps all your working changes and staged files. Often used to re-shape recent commits.",
     confirmSoftResetBtn: "Confirm Soft Reset",
     confirmRevertTitle: (hash: string) => `Revert Commit ${hash}?`,
-    confirmRevertMessage: "This runs 'git revert --no-edit'. A new commit will be automatically created that cleanly rollbacks / cancels the edits in this selected commit.",
+    confirmRevertMessage: "Creates a new commit that undoes the changes from this commit — like reversing what it did. History is kept intact, so this is a safe way to undo.",
     confirmRevertBtn: "Confirm Revert",
     aiSettings: "AI Settings",
     aiSettingsTitle: "AI Settings",
@@ -178,6 +183,67 @@ const translations = {
     changedFiles: "Changed Files",
     noChangedFiles: "No file changes in this commit.",
     selectFileForDiff: "Select a file to view its diff.",
+    menuCheckout: "Checkout this commit",
+    menuCherryPick: "Cherry-pick onto current branch",
+    menuRevert: "Revert this commit",
+    menuResetSoft: "Reset --soft to here",
+    menuResetHard: "Reset --hard to here",
+    menuCreateTag: "Create tag here…",
+    menuCreateBranch: "Create branch here…",
+    menuCopySha: "Copy SHA",
+    menuCopyMessage: "Copy message",
+    menuDeleteTag: "Delete tag",
+    menuDeleteBranch: "Delete branch",
+    menuForceDeleteBranch: "Force delete branch",
+    tagModalTitle: "Create Tag",
+    tagNameLabel: "Tag name",
+    tagMessageLabel: "Message (optional — annotated tag)",
+    branchModalTitle: "Create Branch",
+    branchNameLabel: "Branch name",
+    modalConfirm: "Create",
+    modalCancel: "Cancel",
+    confirmCherryPickTitle: (hash: string) => `Cherry-pick commit ${hash}?`,
+    confirmCherryPickMessage: (hash: string) => `Copies the changes from commit ${hash} and applies them onto your current branch as a new commit. The original commit stays where it is. If the changes conflict, you'll need to resolve them manually.`,
+    confirmCherryPickBtn: "Cherry-pick",
+    confirmDeleteTagTitle: (name: string) => `Delete tag ${name}?`,
+    confirmDeleteTagMessage: (name: string) => `Deletes the tag ${name}. A tag is just a bookmark pointing at a commit — removing it doesn't affect any commit or your code.`,
+    confirmDeleteTagBtn: "Delete tag",
+    confirmDeleteBranchTitle: (name: string) => `Delete branch ${name}?`,
+    confirmDeleteBranchMessage: (name: string) => `Deletes the branch ${name}. If this branch hasn't been merged elsewhere, git will block it to warn you (so you don't lose work).`,
+    confirmDeleteBranchBtn: "Delete branch",
+    confirmForceDeleteBranchTitle: (name: string) => `Force delete branch ${name}?`,
+    confirmForceDeleteBranchMessage: (name: string) => `⚠️ FORCE-deletes the branch ${name} even if it hasn't been merged. Any commits that exist only on this branch may be lost. Please be sure.`,
+    confirmForceDeleteBranchBtn: "Force delete",
+    toastCherryPicked: "Cherry-pick applied to current branch.",
+    toastTagCreated: (name: string) => `Tag ${name} created.`,
+    toastBranchCreatedAt: (name: string) => `Branch ${name} created and checked out.`,
+    toastCopiedSha: "Commit SHA copied to clipboard.",
+    toastCopiedMessage: "Commit message copied to clipboard.",
+    toastCopyFailed: "Copy failed.",
+    toastTagDeleted: (name: string) => `Tag ${name} deleted.`,
+    toastBranchDeleted: (name: string) => `Branch ${name} deleted.`,
+    menuCheckoutBranch: "Checkout this branch",
+    menuMergeBranch: "Merge into current branch",
+    menuRenameBranch: "Rename branch…",
+    menuCopyBranchName: "Copy branch name",
+    renameModalTitle: "Rename Branch",
+    renameNewNameLabel: "New branch name",
+    confirmMergeBranchTitle: (name: string) => `Merge branch ${name}?`,
+    confirmMergeBranchMessage: (name: string) => `Merges the changes from branch ${name} into your current branch. If both sides changed the same lines you'll get conflicts to resolve manually.`,
+    confirmMergeBranchBtn: "Merge",
+    toastBranchMerged: (name: string) => `Branch ${name} merged into current branch.`,
+    toastBranchRenamed: (name: string) => `Branch renamed to ${name}.`,
+    toastCopiedBranch: "Branch name copied to clipboard.",
+    pull: "Pull",
+    push: "Push",
+    fetch: "Fetch",
+    aheadBehindTip: "Commits ahead / behind the remote",
+    toastPullDone: "Pulled latest changes from remote.",
+    toastPushDone: "Pushed to remote.",
+    toastFetchDone: "Fetched remote updates.",
+    terminal: "Terminal",
+    expandTerminal: "Expand terminal",
+    collapseTerminal: "Collapse terminal",
   },
   zh: {
     appTitle: "GitLanes",
@@ -207,7 +273,6 @@ const translations = {
     settingsLanguage: "介面語言",
     closeRepoTitle: "關閉儲存庫？",
     closeRepoMessage: "這只會在 App 中關閉目前儲存庫，不會刪除本地檔案或 Git 歷史記錄。",
-    refresh: "重新整理儲存庫狀態",
     checkout: "切換：",
     merge: "合併",
     mergeWith: "合併...",
@@ -237,7 +302,6 @@ const translations = {
     authorLabel: "作者",
     dateLabel: "日期",
     subjectLabel: "說明",
-    workspaceActions: "工作區操作",
     workspaceTitle: "工作區",
     emptyFolder: "空資料夾",
     codeEditorTitle: "工作區程式編輯器",
@@ -282,16 +346,16 @@ const translations = {
     toastReverted: (hash: string) => `已成功 revert commit ${hash}！`,
     toastCheckedOut: (hash: string) => `已成功將 HEAD checkout 到 commit ${hash}`,
     confirmCheckoutTitle: (hash: string) => `將 HEAD 強制 checkout 到 commit ${hash}？`,
-    confirmCheckoutMessage: "確定要將 HEAD 強制 checkout 到這個 commit 嗎？警告：此儲存庫中 stash 與未 commit 的修改將被覆蓋。",
+    confirmCheckoutMessage: "會切換到這個 commit 的狀態來檢視（detached HEAD）——你會暫時不在任何分支上。在這個狀態下做的新 commit，要記得另外開分支才能保存，否則可能會遺失。",
     confirmCheckoutBtn: "確認 Checkout",
     confirmHardResetTitle: (hash: string) => `將 HEAD 硬重置到 commit ${hash}？`,
-    confirmHardResetMessage: "警告：這會執行 'git reset --hard'。任何已修改／未 commit 的程式碼與檔案將被永久刪除，以符合此 commit 狀態。",
+    confirmHardResetMessage: "⚠️ 會把目前分支移回這個 commit，並且「丟棄」這個 commit 之後的所有 commit，以及尚未提交的改動。這個動作無法復原，請確認。",
     confirmHardResetBtn: "確認硬重置",
     confirmSoftResetTitle: (hash: string) => `將 HEAD 軟重置到 commit ${hash}？`,
-    confirmSoftResetMessage: "這會執行 'git reset --soft'。你目前的修改會保留，但 HEAD 會移回此 commit，讓你可以重新 commit。",
+    confirmSoftResetMessage: "會把目前分支的指標移回這個 commit，但你工作區和已 stage 的檔案改動都會保留下來。常用來把後面幾個 commit 重新整理成一個。",
     confirmSoftResetBtn: "確認軟重置",
     confirmRevertTitle: (hash: string) => `Revert commit ${hash}？`,
-    confirmRevertMessage: "這會執行 'git revert --no-edit'。系統會自動建立一個新 commit，乾淨地回復／取消此 commit 的變更。",
+    confirmRevertMessage: "會新增一個 commit 來「抵銷」這個 commit 的變更，等於把它做的事反向做一次。歷史會完整保留，是安全的還原方式。",
     confirmRevertBtn: "確認 Revert",
     aiSettings: "AI 設定",
     aiSettingsTitle: "AI 設定",
@@ -311,6 +375,67 @@ const translations = {
     changedFiles: "更動的檔案",
     noChangedFiles: "這個 commit 沒有檔案更動。",
     selectFileForDiff: "選擇檔案以檢視 diff。",
+    menuCheckout: "Checkout 到這個 commit",
+    menuCherryPick: "Cherry-pick 到目前分支",
+    menuRevert: "Revert 這個 commit",
+    menuResetSoft: "Reset --soft 到這裡",
+    menuResetHard: "Reset --hard 到這裡",
+    menuCreateTag: "在這裡打 tag…",
+    menuCreateBranch: "從這裡開分支…",
+    menuCopySha: "複製 SHA",
+    menuCopyMessage: "複製訊息",
+    menuDeleteTag: "刪除 tag",
+    menuDeleteBranch: "刪除分支",
+    menuForceDeleteBranch: "強制刪除分支",
+    tagModalTitle: "建立 Tag",
+    tagNameLabel: "Tag 名稱",
+    tagMessageLabel: "訊息（選填 — 會建立 annotated tag）",
+    branchModalTitle: "建立分支",
+    branchNameLabel: "分支名稱",
+    modalConfirm: "建立",
+    modalCancel: "取消",
+    confirmCherryPickTitle: (hash: string) => `Cherry-pick commit ${hash}？`,
+    confirmCherryPickMessage: (hash: string) => `會把 commit ${hash} 的變更「複製」一份套用到你目前的分支，產生一個新的 commit。原本的 commit 不會被移動。如果內容有衝突，需要你手動解決。`,
+    confirmCherryPickBtn: "Cherry-pick",
+    confirmDeleteTagTitle: (name: string) => `刪除 tag ${name}？`,
+    confirmDeleteTagMessage: (name: string) => `會刪除標籤 ${name}。標籤只是指向某個 commit 的書籤，刪掉它不會影響任何 commit 或程式碼。`,
+    confirmDeleteTagBtn: "刪除 tag",
+    confirmDeleteBranchTitle: (name: string) => `刪除分支 ${name}？`,
+    confirmDeleteBranchMessage: (name: string) => `會刪除分支 ${name}。如果這個分支的內容還沒被合併到別的分支，git 會擋下來提醒你（避免遺失工作）。`,
+    confirmDeleteBranchBtn: "刪除分支",
+    confirmForceDeleteBranchTitle: (name: string) => `強制刪除分支 ${name}？`,
+    confirmForceDeleteBranchMessage: (name: string) => `⚠️ 會「強制」刪除分支 ${name}，即使它還沒被合併。這個分支上只存在於它身上、還沒合併的 commit 可能會遺失。請確認。`,
+    confirmForceDeleteBranchBtn: "強制刪除",
+    toastCherryPicked: "已 cherry-pick 到目前分支。",
+    toastTagCreated: (name: string) => `已建立 tag ${name}。`,
+    toastBranchCreatedAt: (name: string) => `已建立並切換到分支 ${name}。`,
+    toastCopiedSha: "已複製 commit SHA 到剪貼簿。",
+    toastCopiedMessage: "已複製 commit 訊息到剪貼簿。",
+    toastCopyFailed: "複製失敗。",
+    toastTagDeleted: (name: string) => `已刪除 tag ${name}。`,
+    toastBranchDeleted: (name: string) => `已刪除分支 ${name}。`,
+    menuCheckoutBranch: "切換到這個分支",
+    menuMergeBranch: "合併進目前分支",
+    menuRenameBranch: "重新命名分支…",
+    menuCopyBranchName: "複製分支名稱",
+    renameModalTitle: "重新命名分支",
+    renameNewNameLabel: "新的分支名稱",
+    confirmMergeBranchTitle: (name: string) => `合併分支 ${name}？`,
+    confirmMergeBranchMessage: (name: string) => `會把分支 ${name} 的變更合併進你目前的分支。如果兩邊改到同一處會產生衝突，需要你手動解決。`,
+    confirmMergeBranchBtn: "合併",
+    toastBranchMerged: (name: string) => `已將分支 ${name} 合併進目前分支。`,
+    toastBranchRenamed: (name: string) => `分支已重新命名為 ${name}。`,
+    toastCopiedBranch: "已複製分支名稱到剪貼簿。",
+    pull: "Pull",
+    push: "Push",
+    fetch: "Fetch",
+    aheadBehindTip: "領先 / 落後遠端的 commit 數",
+    toastPullDone: "已從遠端拉取最新變更。",
+    toastPushDone: "已推送到遠端。",
+    toastFetchDone: "已抓取遠端更新。",
+    terminal: "終端機",
+    expandTerminal: "展開終端機",
+    collapseTerminal: "收合終端機",
   },
 };
 
@@ -338,6 +463,8 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isAiSettingsOpen, setIsAiSettingsOpen] = useState<boolean>(false);
   const [currentBranch, setCurrentBranch] = useState<string>("main");
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [aheadBehind, setAheadBehind] = useState<{ hasUpstream: boolean; ahead: number; behind: number }>({ hasUpstream: false, ahead: 0, behind: 0 });
   const [gitFiles, setGitFiles] = useState<GitFile[]>([]);
   const [commits, setCommits] = useState<CommitNode[]>([]);
   const [hasMoreCommits, setHasMoreCommits] = useState<boolean>(false);
@@ -351,9 +478,32 @@ export default function App() {
   // Command logs telemetry
   const [isGraphMaximized, setIsGraphMaximized] = useState<boolean>(false);
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState<boolean>(true);
+  const [graphHeight, setGraphHeight] = useState<number>(() => {
+    const v = Number(localStorage.getItem("gitlanes.layout.graphHeight"));
+    return Number.isFinite(v) && v > 0 ? v : 360;
+  });
+  const [terminalHeight, setTerminalHeight] = useState<number>(() => {
+    const v = Number(localStorage.getItem("gitlanes.layout.terminalHeight"));
+    return Number.isFinite(v) && v > 0 ? v : 240;
+  });
+  const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(
+    localStorage.getItem("gitlanes.layout.terminalOpen") === "true"
+  );
+  const [workspaceFilesWidth, setWorkspaceFilesWidth] = useState<number>(() => {
+    const v = Number(localStorage.getItem("gitlanes.layout.filesWidth"));
+    return Number.isFinite(v) && v > 0 ? v : 280;
+  });
+  const [inspectorLeftWidth, setInspectorLeftWidth] = useState<number>(() => {
+    const v = Number(localStorage.getItem("gitlanes.layout.inspectorLeftWidth"));
+    return Number.isFinite(v) && v > 0 ? v : 420;
+  });
 
   // Focus view states
   const [selectedCommit, setSelectedCommit] = useState<CommitNode | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ commit: CommitNode; x: number; y: number } | null>(null);
+  const [refMenu, setRefMenu] = useState<{ refName: string; kind: string; x: number; y: number } | null>(null);
+  const [renameModal, setRenameModal] = useState<{ branch: string } | null>(null);
+  const [inputModal, setInputModal] = useState<{ mode: "tag" | "branch"; commit: CommitNode } | null>(null);
   const [diffTarget, setDiffTarget] = useState<{ path: string; staged: boolean } | null>(null);
   const [commitFiles, setCommitFiles] = useState<{ status: string; path: string }[]>([]);
   const [commitDiffFile, setCommitDiffFile] = useState<string | null>(null);
@@ -456,6 +606,11 @@ export default function App() {
       if (statusData.initialized) {
         addManagedRepo(statusData.workspacePath || "");
         setCurrentBranch(statusData.currentBranch);
+        setAheadBehind({
+          hasUpstream: !!statusData.hasUpstream,
+          ahead: statusData.ahead ?? 0,
+          behind: statusData.behind ?? 0,
+        });
         setGitFiles(statusData.files);
 
         // 2. Load commits hierarchy
@@ -1000,6 +1155,203 @@ export default function App() {
     }
   };
 
+  const handleCherryPick = (commit: CommitNode) => {
+    requestConfirm(
+      t.confirmCherryPickTitle(commit.hash),
+      t.confirmCherryPickMessage(commit.hash),
+      async () => {
+        try {
+          const res = await fetch("/api/git/cherry-pick", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ commit: commit.hash }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Cherry-pick failed");
+          showToast(t.toastCherryPicked);
+          refreshState();
+        } catch (err: unknown) {
+          showToast(err instanceof Error ? err.message : "Cherry-pick failed", true);
+        }
+      },
+      t.confirmCherryPickBtn,
+      "bg-amber-600 hover:bg-amber-500"
+    );
+  };
+
+  const handleCreateTag = async (commit: CommitNode, name: string, message: string) => {
+    try {
+      const res = await fetch("/api/git/tag/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, commit: commit.hash, message }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create tag");
+      showToast(t.toastTagCreated(name));
+      refreshState();
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : "Failed to create tag", true);
+    }
+  };
+
+  const handleCreateBranchAt = async (commit: CommitNode, name: string) => {
+    try {
+      const res = await fetch("/api/git/branch/create-at", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, commit: commit.hash }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create branch");
+      showToast(t.toastBranchCreatedAt(name));
+      setSelectedCommit(null);
+      refreshState();
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : "Failed to create branch", true);
+    }
+  };
+
+  const handleCopy = async (text: string, kind: "sha" | "message") => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast(kind === "sha" ? t.toastCopiedSha : t.toastCopiedMessage);
+    } catch {
+      showToast(t.toastCopyFailed, true);
+    }
+  };
+
+  const handleDeleteTag = (name: string) => {
+    requestConfirm(
+      t.confirmDeleteTagTitle(name),
+      t.confirmDeleteTagMessage(name),
+      async () => {
+        try {
+          const res = await fetch("/api/git/tag/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Failed to delete tag");
+          showToast(t.toastTagDeleted(name));
+          refreshState();
+        } catch (err: unknown) {
+          showToast(err instanceof Error ? err.message : "Failed to delete tag", true);
+        }
+      },
+      t.confirmDeleteTagBtn,
+      "bg-rose-600 hover:bg-rose-500"
+    );
+  };
+
+  const handleDeleteBranch = (name: string, force: boolean) => {
+    requestConfirm(
+      force ? t.confirmForceDeleteBranchTitle(name) : t.confirmDeleteBranchTitle(name),
+      force ? t.confirmForceDeleteBranchMessage(name) : t.confirmDeleteBranchMessage(name),
+      async () => {
+        try {
+          const res = await fetch("/api/git/branch/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, force }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Failed to delete branch");
+          showToast(t.toastBranchDeleted(name));
+          refreshState();
+        } catch (err: unknown) {
+          showToast(err instanceof Error ? err.message : "Failed to delete branch", true);
+        }
+      },
+      force ? t.confirmForceDeleteBranchBtn : t.confirmDeleteBranchBtn,
+      "bg-rose-600 hover:bg-rose-500"
+    );
+  };
+
+  const handleMergeBranchFromMenu = (name: string) => {
+    requestConfirm(
+      t.confirmMergeBranchTitle(name),
+      t.confirmMergeBranchMessage(name),
+      async () => {
+        try {
+          const res = await fetch("/api/git/branch/merge", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Merge failed");
+          showToast(t.toastBranchMerged(name));
+          refreshState();
+        } catch (err: unknown) {
+          showToast(err instanceof Error ? err.message : "Merge failed", true);
+        }
+      },
+      t.confirmMergeBranchBtn,
+      "bg-cyan-600 hover:bg-cyan-500"
+    );
+  };
+
+  const handleRenameBranch = async (oldName: string, newName: string) => {
+    try {
+      const res = await fetch("/api/git/branch/rename", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oldName, newName }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Rename failed");
+      showToast(t.toastBranchRenamed(newName));
+      refreshState();
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : "Rename failed", true);
+    }
+  };
+
+  const handleCopyBranchName = async (name: string) => {
+    try {
+      await navigator.clipboard.writeText(name);
+      showToast(t.toastCopiedBranch);
+    } catch {
+      showToast(t.toastCopyFailed, true);
+    }
+  };
+
+  const runSync = async (path: string, okToast: string, failFallback: string) => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch(path, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || failFallback);
+      showToast(okToast);
+      refreshState();
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : failFallback, true);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handlePull = () => runSync("/api/git/pull", t.toastPullDone, "Pull failed");
+  const handlePush = () => runSync("/api/git/push", t.toastPushDone, "Push failed");
+  const handleFetch = () => runSync("/api/git/fetch", t.toastFetchDone, "Fetch failed");
+
+  const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+
+  const persistGraphHeight = () => localStorage.setItem("gitlanes.layout.graphHeight", String(graphHeight));
+  const persistTerminalHeight = () => localStorage.setItem("gitlanes.layout.terminalHeight", String(terminalHeight));
+  const persistFilesWidth = () => localStorage.setItem("gitlanes.layout.filesWidth", String(workspaceFilesWidth));
+  const persistInspectorLeftWidth = () => localStorage.setItem("gitlanes.layout.inspectorLeftWidth", String(inspectorLeftWidth));
+
+  const toggleTerminal = () => {
+    setIsTerminalOpen((v) => {
+      const next = !v;
+      localStorage.setItem("gitlanes.layout.terminalOpen", String(next));
+      return next;
+    });
+  };
+
   const renderRepoSidebar = () => (
     <aside className={`${isRepoSidebarCollapsed ? "w-12" : "w-[280px]"} h-full bg-slate-950 border-r border-slate-900 shrink-0 transition-all duration-200 flex flex-col`}>
       <div className="h-12 px-3 border-b border-slate-900 flex items-center justify-between">
@@ -1399,6 +1751,99 @@ export default function App() {
     );
   }
 
+  const buildCommitMenuItems = (commit: CommitNode): CommitContextMenuItem[] => [
+    {
+      key: "checkout",
+      label: t.menuCheckout,
+      onSelect: () => requestConfirm(
+        t.confirmCheckoutTitle(commit.hash),
+        t.confirmCheckoutMessage,
+        async () => {
+          setIsActionLoading(true);
+          try {
+            const res = await fetch("/api/git/branch/checkout", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name: commit.hash }),
+            });
+            if (!res.ok) throw new Error("Hard checkout error");
+            showToast(t.toastCheckedOut(commit.hash));
+            setSelectedCommit(null);
+            refreshState();
+          } catch (err: unknown) {
+            showToast(err instanceof Error ? err.message : "Checkout failed", true);
+          } finally {
+            setIsActionLoading(false);
+          }
+        },
+        t.confirmCheckoutBtn,
+        "bg-amber-600 hover:bg-amber-500"
+      ),
+    },
+    { key: "cherry", label: t.menuCherryPick, onSelect: () => handleCherryPick(commit) },
+    {
+      key: "revert",
+      label: t.menuRevert,
+      onSelect: () => requestConfirm(
+        t.confirmRevertTitle(commit.hash),
+        t.confirmRevertMessage,
+        () => handleGitRevert(commit.hash),
+        t.confirmRevertBtn,
+        "bg-purple-600 hover:bg-purple-500"
+      ),
+    },
+    {
+      key: "soft",
+      label: t.menuResetSoft,
+      dividerBefore: true,
+      onSelect: () => requestConfirm(
+        t.confirmSoftResetTitle(commit.hash),
+        t.confirmSoftResetMessage,
+        () => handleGitReset(commit.hash, "soft"),
+        t.confirmSoftResetBtn,
+        "bg-cyan-600 hover:bg-cyan-500"
+      ),
+    },
+    {
+      key: "hard",
+      label: t.menuResetHard,
+      danger: true,
+      onSelect: () => requestConfirm(
+        t.confirmHardResetTitle(commit.hash),
+        t.confirmHardResetMessage,
+        () => handleGitReset(commit.hash, "hard"),
+        t.confirmHardResetBtn,
+        "bg-rose-600 hover:bg-rose-500"
+      ),
+    },
+    { key: "tag", label: t.menuCreateTag, dividerBefore: true, onSelect: () => setInputModal({ mode: "tag", commit }) },
+    { key: "branch", label: t.menuCreateBranch, onSelect: () => setInputModal({ mode: "branch", commit }) },
+    { key: "copysha", label: t.menuCopySha, dividerBefore: true, onSelect: () => handleCopy(commit.hash, "sha") },
+    { key: "copymsg", label: t.menuCopyMessage, onSelect: () => handleCopy(commit.message, "message") },
+  ];
+
+  const buildRefMenuItems = (refName: string, kind: string): CommitContextMenuItem[] => {
+    if (kind === "tag") {
+      return [{ key: "deltag", label: `${t.menuDeleteTag} ${refName}`, danger: true, onSelect: () => handleDeleteTag(refName) }];
+    }
+    if (kind === "head") {
+      // Current branch: checkout-self / merge-self / delete-self don't apply.
+      return [
+        { key: "rename", label: t.menuRenameBranch, onSelect: () => setRenameModal({ branch: refName }) },
+        { key: "copy", label: t.menuCopyBranchName, onSelect: () => handleCopyBranchName(refName) },
+      ];
+    }
+    // other local branch
+    return [
+      { key: "checkout", label: t.menuCheckoutBranch, onSelect: () => handleCheckoutBranch(refName) },
+      { key: "merge", label: t.menuMergeBranch, onSelect: () => handleMergeBranchFromMenu(refName) },
+      { key: "rename", label: t.menuRenameBranch, dividerBefore: true, onSelect: () => setRenameModal({ branch: refName }) },
+      { key: "copy", label: t.menuCopyBranchName, onSelect: () => handleCopyBranchName(refName) },
+      { key: "delbranch", label: `${t.menuDeleteBranch} ${refName}`, dividerBefore: true, onSelect: () => handleDeleteBranch(refName, false) },
+      { key: "forcedel", label: `${t.menuForceDeleteBranch} ${refName}`, danger: true, onSelect: () => handleDeleteBranch(refName, true) },
+    ];
+  };
+
   // Find the files currently staged or modified
   const stagedFiles = gitFiles.filter((f) => f.staged);
   const modifiedFiles = gitFiles.filter((f) => f.modified);
@@ -1425,9 +1870,10 @@ export default function App() {
       )}
 
       {/* Main workspace nav bar */}
-      <nav id="workspace-nav" className="relative px-6 py-3.5 bg-slate-900 border-b border-slate-800 flex items-center justify-end shrink-0 gap-3">
-        {/* Branch / repo selector — absolutely centered so it stays mid-header as the window widens */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center min-w-0 max-w-[40%] z-10">
+      <nav id="workspace-nav" className="relative px-6 py-3.5 bg-slate-900 border-b border-slate-800 flex items-center justify-end shrink-0 gap-3 min-h-[57px]">
+        {/* Branch / repo selector — absolutely centered on the viewport.
+            max-w leaves room for the right-aligned action group so the path truncates instead of overlapping. */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center min-w-0 max-w-[calc(100%-34rem)] z-10">
           <button
             onClick={() => setIsRepoPanelOpen((v) => !v)}
             title={t.switchRepo}
@@ -1435,21 +1881,47 @@ export default function App() {
           >
             <GitBranch className="h-4 w-4 text-cyan-400 animate-pulse shrink-0" />
             <span className="text-cyan-400 font-mono font-bold text-xs uppercase tracking-wider shrink-0">{currentBranch}</span>
+            {aheadBehind.hasUpstream && (aheadBehind.ahead > 0 || aheadBehind.behind > 0) && (
+              <span className="flex items-center gap-1 text-[12px] font-mono shrink-0" title={t.aheadBehindTip}>
+                {aheadBehind.ahead > 0 && <span className="text-emerald-400">↑{aheadBehind.ahead}</span>}
+                {aheadBehind.behind > 0 && <span className="text-amber-400">↓{aheadBehind.behind}</span>}
+              </span>
+            )}
             <span className="text-slate-500 font-mono text-xs truncate min-w-0">{workspacePath}</span>
             <ChevronDown className={`h-3.5 w-3.5 text-slate-500 shrink-0 transition-transform ${isRepoPanelOpen ? "rotate-180" : ""}`} />
           </button>
           {isRepoPanelOpen && renderRepoPanel()}
         </div>
 
-        {/* Action controllers: checkout, merge & settings (right-aligned, above the centered selector) */}
+        {/* Action controllers: right side (sync, checkout, merge & settings). */}
         <div className="flex items-center justify-end gap-3 shrink-0 z-20">
-          {/* Quick status refresher */}
+          {/* Pull / Push / Fetch sync buttons */}
           <button
-            onClick={refreshState}
-            title={t.refresh}
-            className="p-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer"
+            onClick={handlePull}
+            disabled={isSyncing}
+            title={t.pull}
+            className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer disabled:opacity-50 text-[12px] font-mono shrink-0"
           >
-            <RefreshCw className="h-3.5 w-3.5" />
+            {isSyncing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+            <span>{t.pull}</span>
+          </button>
+          <button
+            onClick={handlePush}
+            disabled={isSyncing}
+            title={t.push}
+            className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer disabled:opacity-50 text-[12px] font-mono shrink-0"
+          >
+            {isSyncing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+            <span>{t.push}</span>
+          </button>
+          <button
+            onClick={handleFetch}
+            disabled={isSyncing}
+            title={t.fetch}
+            className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer disabled:opacity-50 text-[12px] font-mono shrink-0"
+          >
+            {isSyncing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <DownloadCloud className="h-3.5 w-3.5" />}
+            <span>{t.fetch}</span>
           </button>
 
           {/* Checkout Selector */}
@@ -1470,7 +1942,7 @@ export default function App() {
 
           {/* Merge Trigger */}
           {branches.length > 1 && (
-            <form onSubmit={handleMergeBranch} className="flex items-center space-x-1 border border-slate-800 p-0.5 rounded bg-slate-950">
+            <form onSubmit={handleMergeBranch} className="flex items-center space-x-1 border border-slate-800 p-0.5 rounded bg-slate-950 shrink-0">
               <select
                 value={mergeTargetBranch}
                 onChange={(e) => setMergeTargetBranch(e.target.value)}
@@ -1775,10 +2247,13 @@ export default function App() {
         </div>
 
         {/* Center/main workspace dashboard columns */}
-        <div className="flex-1 flex flex-col p-4 overflow-hidden gap-4">
-          
-          {/* Top Panel: Git history DAG graph and node analysis */}
-          <div className={isGraphMaximized ? "flex-1 min-h-0" : "h-[43%] min-h-[220px]"}>
+        <div className="flex-1 flex flex-col overflow-hidden">
+
+          {/* Top: Commit graph */}
+          <div
+            style={isGraphMaximized ? undefined : { height: graphHeight }}
+            className={isGraphMaximized ? "flex-1 min-h-0 p-4 pb-2" : "shrink-0 min-h-[180px] p-4 pb-2"}
+          >
             <GitGraph
               commits={commits}
               currentBranch={currentBranch}
@@ -1798,217 +2273,181 @@ export default function App() {
                 setSelectedCommit(commit);
                 setDiffTarget(null); // click a commit clears instant diff targets
               }}
+              onCommitContextMenu={(commit, x, y) => setContextMenu({ commit, x, y })}
+              onRefContextMenu={(ref, x, y) => setRefMenu({ refName: ref.name, kind: ref.kind, x, y })}
             />
           </div>
 
-          {/* Bottom Panel + CLI 在線圖最大化時整批收起，讓 commit 線圖吃滿高度 */}
+          {/* Resizer A: graph ↔ workspace */}
           {!isGraphMaximized && (
-          <>
-          {/* Bottom Panel: Split screen (Code editor / Diff viewer / Commit Details) */}
-          {isWorkspaceOpen ? (
-          <div className="flex-1 overflow-hidden min-h-[300px]">
-            {diffTarget ? (
-              <DiffViewer
-                file={diffTarget.path}
-                staged={diffTarget.staged}
-                lang={language}
-                onClose={() => setDiffTarget(null)}
-                onNeedAiSetup={() => {
-                  showToast(t.toastSetupAiFirst, true);
-                  setIsAiSettingsOpen(true);
-                }}
-              />
-            ) : selectedCommit ? (
-              /* Selected commit historical inspector panel */
-              <div className="h-full bg-slate-900 border border-slate-800 rounded-lg overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between px-4 py-3 bg-slate-950 border-b border-slate-800">
-                  <div className="flex items-center space-x-2">
-                    <GitCommit className="h-4 w-4 text-cyan-400" />
-                    <span className="text-slate-200 font-semibold text-xs font-mono">{t.commitLabel}: {selectedCommit.hash}</span>
-                  </div>
-                  <button
-                    onClick={() => setSelectedCommit(null)}
-                    className="text-slate-500 hover:text-slate-300 text-xs font-mono font-bold cursor-pointer"
-                  >
-                    {t.closeLog}
-                  </button>
-                </div>
-
-                <div className="flex-1 flex overflow-hidden">
-                  <div className="w-[42%] min-w-[260px] p-5 overflow-auto space-y-4 border-r border-slate-800">
-                  <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
-                    <div>
-                      <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.authorLabel}</span>
-                      <span className="text-slate-350 text-xs font-mono">{selectedCommit.author}</span>
-                    </div>
-                    <div>
-                      <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.dateLabel}</span>
-                      <span className="text-slate-350 text-xs font-mono">{selectedCommit.date}</span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.subjectLabel}</span>
-                      <pre className="text-slate-200 text-xs font-semibold font-mono whitespace-pre-wrap bg-slate-950 p-2 border border-slate-900 rounded mt-1">{selectedCommit.message}</pre>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h5 className="text-slate-400 text-xs font-bold font-mono uppercase tracking-wider mb-2">{t.workspaceActions}</h5>
-                    <div className="flex flex-wrap gap-2.5">
-                      <button
-                        onClick={() => {
-                          requestConfirm(
-                            t.confirmCheckoutTitle(selectedCommit.hash),
-                            t.confirmCheckoutMessage,
-                            async () => {
-                              setIsActionLoading(true);
-                              try {
-                                const res = await fetch("/api/git/branch/checkout", {
-                                  method: "POST",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ name: selectedCommit.hash }),
-                                });
-                                if (!res.ok) throw new Error("Hard checkout error");
-                                showToast(t.toastCheckedOut(selectedCommit.hash));
-                                setSelectedCommit(null);
-                                refreshState();
-                              } catch (err: any) {
-                                showToast(err.message, true);
-                              } finally {
-                                setIsActionLoading(false);
-                              }
-                            },
-                            t.confirmCheckoutBtn,
-                            "bg-amber-600 hover:bg-amber-500"
-                          );
-                        }}
-                        className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono px-3.5 py-2 rounded-md transition-colors cursor-pointer"
-                      >
-                        Checkout Commit [{selectedCommit.hash}]
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          requestConfirm(
-                            t.confirmHardResetTitle(selectedCommit.hash),
-                            t.confirmHardResetMessage,
-                            () => handleGitReset(selectedCommit.hash, "hard"),
-                            t.confirmHardResetBtn,
-                            "bg-rose-600 hover:bg-rose-500"
-                          );
-                        }}
-                        className="bg-rose-950/40 border border-rose-800 hover:bg-rose-900/60 text-rose-300 text-xs font-mono px-3.5 py-2 rounded-md transition-colors cursor-pointer"
-                      >
-                        Reset --hard
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          requestConfirm(
-                            t.confirmSoftResetTitle(selectedCommit.hash),
-                            t.confirmSoftResetMessage,
-                            () => handleGitReset(selectedCommit.hash, "soft"),
-                            t.confirmSoftResetBtn,
-                            "bg-cyan-600 hover:bg-cyan-500"
-                          );
-                        }}
-                        className="bg-cyan-950/45 border border-cyan-800 hover:bg-cyan-900/50 text-cyan-300 text-xs font-mono px-3.5 py-2 rounded-md transition-colors cursor-pointer"
-                      >
-                        Reset --soft
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          requestConfirm(
-                            t.confirmRevertTitle(selectedCommit.hash),
-                            t.confirmRevertMessage,
-                            () => handleGitRevert(selectedCommit.hash),
-                            t.confirmRevertBtn,
-                            "bg-purple-600 hover:bg-purple-500"
-                          );
-                        }}
-                        className="bg-purple-950/45 border border-purple-800 hover:bg-purple-900/50 text-purple-300 text-xs font-mono px-3.5 py-2 rounded-md transition-colors cursor-pointer"
-                      >
-                        Revert Commit
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Changed files in this commit */}
-                  <div>
-                    <h5 className="text-slate-400 text-xs font-bold font-mono uppercase tracking-wider mb-2">{t.changedFiles} ({commitFiles.length})</h5>
-                    {commitFiles.length === 0 ? (
-                      <span className="text-slate-600 text-[12px] font-mono italic">{t.noChangedFiles}</span>
-                    ) : (
-                      <div className="space-y-1 bg-slate-950/60 p-1.5 rounded-lg border border-slate-850">
-                        {commitFiles.map((file) => (
-                          <button
-                            key={file.path}
-                            onClick={() => setCommitDiffFile(file.path)}
-                            className={`w-full flex items-center space-x-2 text-xs px-2 py-1.5 rounded transition-colors text-left cursor-pointer ${
-                              commitDiffFile === file.path ? "bg-cyan-950/40 border border-cyan-800/60" : "bg-slate-900/30 hover:bg-slate-900/80 hover:border-slate-700 border border-transparent"
-                            }`}
-                          >
-                            <span className="text-[12px] px-1 bg-slate-800 text-slate-300 rounded font-semibold shrink-0 uppercase w-5 text-center">{file.status.charAt(0)}</span>
-                            <span className="font-mono text-[12px] text-slate-300 truncate" title={file.path}>{file.path}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  </div>
-
-                  {/* Right panel: diff of the selected file in this commit */}
-                  <div className="flex-1 min-w-0 overflow-hidden">
-                    {commitDiffFile ? (
-                      <DiffViewer
-                        key={`${selectedCommit.hash}:${commitDiffFile}`}
-                        file={commitDiffFile}
-                        staged={false}
-                        commitHash={selectedCommit.hash}
-                        lang={language}
-                        onClose={() => setCommitDiffFile(null)}
-                        onNeedAiSetup={() => {
-                          showToast(t.toastSetupAiFirst, true);
-                          setIsAiSettingsOpen(true);
-                        }}
-                      />
-                    ) : (
-                      <div className="h-full flex items-center justify-center text-slate-600 text-xs font-mono italic px-6 text-center">
-                        {t.selectFileForDiff}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* Standard code editor panel */
-              <CodeEditor
-                files={sandboxFiles}
-                activeFile={activeFile}
-                onSelectFile={(f) => setActiveFile(f)}
-                onFileUpdated={refreshState}
-                gitFiles={gitFiles}
-                labels={{
-                  workspace: t.workspaceTitle,
-                  emptyFolder: t.emptyFolder,
-                  editorTitle: t.codeEditorTitle,
-                  editorHint: t.codeEditorHint,
-                }}
-                onCollapse={() => setIsWorkspaceOpen(false)}
-                collapseTitle={t.collapseWorkspace}
-              />
-            )}
-          </div>
-          ) : (
-            <button
-              onClick={() => setIsWorkspaceOpen(true)}
-              className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-lg hover:border-slate-700 transition-colors cursor-pointer shrink-0"
-            >
-              <span className="text-slate-400 font-bold text-xs font-mono tracking-wide uppercase">{t.workspaceTitle}</span>
-              <span className="text-slate-500 font-mono text-[12px] font-bold">Expand [ + ]</span>
-            </button>
+            <Resizer
+              orientation="horizontal"
+              onResize={(dy) => setGraphHeight((h) => clamp(h + dy, 180, 2000))}
+              onResizeEnd={persistGraphHeight}
+            />
           )}
-          </>
+
+          {/* Middle: workspace — hidden when graph is maximized */}
+          {!isGraphMaximized && (
+            <div className="flex-1 min-h-[220px] overflow-hidden flex flex-col p-4 pt-2">
+              {/* Bottom Panel: Split screen (Code editor / Diff viewer / Commit Details) */}
+              {isWorkspaceOpen ? (
+              <div className="flex-1 overflow-hidden min-h-[300px]">
+                {diffTarget ? (
+                  <DiffViewer
+                    file={diffTarget.path}
+                    staged={diffTarget.staged}
+                    lang={language}
+                    onClose={() => setDiffTarget(null)}
+                    onNeedAiSetup={() => {
+                      showToast(t.toastSetupAiFirst, true);
+                      setIsAiSettingsOpen(true);
+                    }}
+                  />
+                ) : selectedCommit ? (
+                  /* Selected commit historical inspector panel */
+                  <div className="h-full bg-slate-900 border border-slate-800 rounded-lg overflow-hidden flex flex-col">
+                    <div className="flex items-center justify-between px-4 py-3 bg-slate-950 border-b border-slate-800">
+                      <div className="flex items-center space-x-2">
+                        <GitCommit className="h-4 w-4 text-cyan-400" />
+                        <span className="text-slate-200 font-semibold text-xs font-mono">{t.commitLabel}: {selectedCommit.hash}</span>
+                      </div>
+                      <button
+                        onClick={() => setSelectedCommit(null)}
+                        className="text-slate-500 hover:text-slate-300 text-xs font-mono font-bold cursor-pointer"
+                      >
+                        {t.closeLog}
+                      </button>
+                    </div>
+
+                    <div className="flex-1 flex overflow-hidden">
+                      <div
+                        style={{ width: inspectorLeftWidth }}
+                        className="min-w-[260px] p-5 overflow-auto space-y-4 shrink-0"
+                      >
+                      <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
+                        <div>
+                          <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.authorLabel}</span>
+                          <span className="text-slate-350 text-xs font-mono">{selectedCommit.author}</span>
+                        </div>
+                        <div>
+                          <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.dateLabel}</span>
+                          <span className="text-slate-350 text-xs font-mono">{selectedCommit.date}</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.subjectLabel}</span>
+                          <pre className="text-slate-200 text-xs font-semibold font-mono whitespace-pre-wrap bg-slate-950 p-2 border border-slate-900 rounded mt-1">{selectedCommit.message}</pre>
+                        </div>
+                      </div>
+
+                      {/* Changed files in this commit */}
+                      <div>
+                        <h5 className="text-slate-400 text-xs font-bold font-mono uppercase tracking-wider mb-2">{t.changedFiles} ({commitFiles.length})</h5>
+                        {commitFiles.length === 0 ? (
+                          <span className="text-slate-600 text-[12px] font-mono italic">{t.noChangedFiles}</span>
+                        ) : (
+                          <div className="space-y-1 bg-slate-950/60 p-1.5 rounded-lg border border-slate-850">
+                            {commitFiles.map((file) => (
+                              <button
+                                key={file.path}
+                                onClick={() => setCommitDiffFile(file.path)}
+                                className={`w-full flex items-center space-x-2 text-xs px-2 py-1.5 rounded transition-colors text-left cursor-pointer ${
+                                  commitDiffFile === file.path ? "bg-cyan-950/40 border border-cyan-800/60" : "bg-slate-900/30 hover:bg-slate-900/80 hover:border-slate-700 border border-transparent"
+                                }`}
+                              >
+                                <span className="text-[12px] px-1 bg-slate-800 text-slate-300 rounded font-semibold shrink-0 uppercase w-5 text-center">{file.status.charAt(0)}</span>
+                                <span className="font-mono text-[12px] text-slate-300 truncate" title={file.path}>{file.path}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      </div>
+
+                      <Resizer
+                        orientation="vertical"
+                        onResize={(dx) => setInspectorLeftWidth((w) => clamp(w + dx, 260, 900))}
+                        onResizeEnd={persistInspectorLeftWidth}
+                      />
+
+                      {/* Right panel: diff of the selected file in this commit */}
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        {commitDiffFile ? (
+                          <DiffViewer
+                            key={`${selectedCommit.hash}:${commitDiffFile}`}
+                            file={commitDiffFile}
+                            staged={false}
+                            commitHash={selectedCommit.hash}
+                            lang={language}
+                            onClose={() => setCommitDiffFile(null)}
+                            onNeedAiSetup={() => {
+                              showToast(t.toastSetupAiFirst, true);
+                              setIsAiSettingsOpen(true);
+                            }}
+                          />
+                        ) : (
+                          <div className="h-full flex items-center justify-center text-slate-600 text-xs font-mono italic px-6 text-center">
+                            {t.selectFileForDiff}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Standard code editor panel */
+                  <CodeEditor
+                    files={sandboxFiles}
+                    activeFile={activeFile}
+                    onSelectFile={(f) => setActiveFile(f)}
+                    onFileUpdated={refreshState}
+                    gitFiles={gitFiles}
+                    labels={{
+                      workspace: t.workspaceTitle,
+                      emptyFolder: t.emptyFolder,
+                      editorTitle: t.codeEditorTitle,
+                      editorHint: t.codeEditorHint,
+                    }}
+                    onCollapse={() => setIsWorkspaceOpen(false)}
+                    collapseTitle={t.collapseWorkspace}
+                    filesPanelWidth={workspaceFilesWidth}
+                    onFilesPanelResize={(dx) => setWorkspaceFilesWidth((w) => clamp(w + dx, 200, 800))}
+                    onFilesPanelResizeEnd={persistFilesWidth}
+                  />
+                )}
+              </div>
+              ) : (
+                <button
+                  onClick={() => setIsWorkspaceOpen(true)}
+                  className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-lg hover:border-slate-700 transition-colors cursor-pointer shrink-0"
+                >
+                  <span className="text-slate-400 font-bold text-xs font-mono tracking-wide uppercase">{t.workspaceTitle}</span>
+                  <span className="text-slate-500 font-mono text-[12px] font-bold">Expand [ + ]</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Resizer B: workspace ↔ terminal */}
+          {!isGraphMaximized && isTerminalOpen && (
+            <Resizer
+              orientation="horizontal"
+              onResize={(dy) => setTerminalHeight((h) => clamp(h - dy, 160, 2000))}
+              onResizeEnd={persistTerminalHeight}
+            />
+          )}
+
+          {/* Terminal panel — always present so the bar/toggle remains accessible */}
+          {!isGraphMaximized && (
+            <TerminalPanel
+              open={isTerminalOpen}
+              height={terminalHeight}
+              onToggle={toggleTerminal}
+              labels={{
+                title: t.terminal,
+                expand: t.expandTerminal,
+                collapse: t.collapseTerminal,
+              } satisfies TerminalPanelLabels}
+            />
           )}
 
         </div>
@@ -2043,9 +2482,78 @@ export default function App() {
         } satisfies AiSettingsLabels}
       />
 
+      {contextMenu && (
+        <CommitContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={buildCommitMenuItems(contextMenu.commit)}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      {refMenu && (
+        <CommitContextMenu
+          x={refMenu.x}
+          y={refMenu.y}
+          items={buildRefMenuItems(refMenu.refName, refMenu.kind)}
+          onClose={() => setRefMenu(null)}
+        />
+      )}
+
+      {renameModal && (
+        <CommitInputModal
+          open
+          title={t.renameModalTitle}
+          fields={[{ key: "newName", label: t.renameNewNameLabel, placeholder: renameModal.branch, required: true }]}
+          confirmLabel={t.modalConfirm}
+          cancelLabel={t.modalCancel}
+          onConfirm={(values) => {
+            const oldName = renameModal.branch;
+            setRenameModal(null);
+            handleRenameBranch(oldName, values.newName.trim());
+          }}
+          onClose={() => setRenameModal(null)}
+        />
+      )}
+
+      {inputModal?.mode === "tag" && (
+        <CommitInputModal
+          open
+          title={t.tagModalTitle}
+          fields={[
+            { key: "name", label: t.tagNameLabel, placeholder: "v1.0.0", required: true },
+            { key: "message", label: t.tagMessageLabel, multiline: true },
+          ]}
+          confirmLabel={t.modalConfirm}
+          cancelLabel={t.modalCancel}
+          onConfirm={(values) => {
+            const commit = inputModal.commit;
+            setInputModal(null);
+            handleCreateTag(commit, values.name.trim(), (values.message ?? "").trim());
+          }}
+          onClose={() => setInputModal(null)}
+        />
+      )}
+
+      {inputModal?.mode === "branch" && (
+        <CommitInputModal
+          open
+          title={t.branchModalTitle}
+          fields={[{ key: "name", label: t.branchNameLabel, placeholder: "feature/my-branch", required: true }]}
+          confirmLabel={t.modalConfirm}
+          cancelLabel={t.modalCancel}
+          onConfirm={(values) => {
+            const commit = inputModal.commit;
+            setInputModal(null);
+            handleCreateBranchAt(commit, values.name.trim());
+          }}
+          onClose={() => setInputModal(null)}
+        />
+      )}
+
       {/* Custom Confirmation Dialog Overlay */}
       {confirmModal.isOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-start space-x-3">
               <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-500 shrink-0">

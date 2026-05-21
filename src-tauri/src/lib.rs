@@ -42,6 +42,10 @@ struct GitStatusResponse {
     #[serde(rename = "workspacePath")]
     workspace_path: Option<String>,
     files: Vec<GitFile>,
+    #[serde(rename = "hasUpstream")]
+    has_upstream: bool,
+    ahead: u32,
+    behind: u32,
 }
 
 #[derive(Debug, Serialize)]
@@ -57,12 +61,19 @@ struct GitFile {
 }
 
 #[derive(Debug, Serialize)]
+struct GitRef {
+    name: String,
+    kind: String, // "head" | "branch" | "tag" | "remote"
+}
+
+#[derive(Debug, Serialize)]
 struct CommitNode {
     hash: String,
     parents: Vec<String>,
     author: String,
     date: String,
     message: String,
+    refs: Vec<GitRef>,
 }
 
 #[derive(Debug, Serialize)]
@@ -158,6 +169,25 @@ fn run_git(state: &State<'_, AppState>, args: &[&str]) -> Result<CommandResult, 
     run_process(state, "git", args, &repo_path)
 }
 
+fn run_git_network(state: &State<'_, AppState>, args: &[&str]) -> Result<CommandResult, String> {
+    let repo_path = current_repo_path(state)?;
+    let output = Command::new("git")
+        .args(args)
+        .current_dir(&repo_path)
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .output()
+        .map_err(|err| format!("Failed to run git: {err}"))?;
+    let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+    let code = output.status.code().unwrap_or(1);
+    let command = format!(
+        "git {}",
+        args.iter().map(|arg| quote_arg(arg)).collect::<Vec<_>>().join(" ")
+    );
+    log_command(state, command, code, stdout.clone(), stderr.clone());
+    Ok(CommandResult { stdout, stderr, code })
+}
+
 fn safe_repo_path(base: &Path, file_path: &str) -> Result<PathBuf, String> {
     let base = base.canonicalize().unwrap_or_else(|_| base.to_path_buf());
     let target = base.join(file_path);
@@ -187,6 +217,9 @@ async fn git_status(state: State<'_, AppState>) -> Result<GitStatusResponse, Str
                 current_branch: "none".to_string(),
                 workspace_path: None,
                 files: vec![],
+                has_upstream: false,
+                ahead: 0,
+                behind: 0,
             });
         }
     };
@@ -196,6 +229,9 @@ async fn git_status(state: State<'_, AppState>) -> Result<GitStatusResponse, Str
             current_branch: "none".to_string(),
             workspace_path: Some(repo_path.to_string_lossy().to_string()),
             files: vec![],
+            has_upstream: false,
+            ahead: 0,
+            behind: 0,
         });
     }
 
@@ -252,11 +288,26 @@ async fn git_status(state: State<'_, AppState>) -> Result<GitStatusResponse, Str
         })
         .collect();
 
+    let (has_upstream, ahead, behind) = {
+        let rl = run_git(&state, &["rev-list", "--count", "--left-right", "@{u}...HEAD"])?;
+        if rl.code == 0 {
+            let mut parts = rl.stdout.split_whitespace();
+            let behind = parts.next().and_then(|s| s.parse().ok()).unwrap_or(0);
+            let ahead = parts.next().and_then(|s| s.parse().ok()).unwrap_or(0);
+            (true, ahead, behind)
+        } else {
+            (false, 0u32, 0u32)
+        }
+    };
+
     Ok(GitStatusResponse {
         initialized: true,
         current_branch,
         workspace_path: Some(repo_path.to_string_lossy().to_string()),
         files,
+        has_upstream,
+        ahead,
+        behind,
     })
 }
 
@@ -374,6 +425,47 @@ async fn git_commit(state: State<'_, AppState>, message: String) -> Result<serde
     Ok(json!({ "success": true, "message": result.stdout }))
 }
 
+fn parse_refs(decoration: &str) -> Vec<GitRef> {
+    let outer = decoration.trim();
+    let outer = outer.strip_prefix('(').unwrap_or(outer);
+    let outer = outer.strip_suffix(')').unwrap_or(outer);
+    let trimmed = outer.trim();
+    if trimmed.is_empty() {
+        return Vec::new();
+    }
+    trimmed
+        .split(", ")
+        .filter_map(|token| {
+            let token = token.trim();
+            if token.is_empty() {
+                return None;
+            }
+            if let Some(rest) = token.strip_prefix("HEAD -> ") {
+                let name = rest.trim().strip_prefix("refs/heads/").unwrap_or(rest.trim());
+                return Some(GitRef { name: name.to_string(), kind: "head".to_string() });
+            }
+            if token == "HEAD" {
+                return Some(GitRef { name: "HEAD".to_string(), kind: "head".to_string() });
+            }
+            if let Some(rest) = token.strip_prefix("tag: ") {
+                let name = rest.trim().strip_prefix("refs/tags/").unwrap_or(rest.trim());
+                return Some(GitRef { name: name.to_string(), kind: "tag".to_string() });
+            }
+            if let Some(rest) = token.strip_prefix("refs/heads/") {
+                return Some(GitRef { name: rest.to_string(), kind: "branch".to_string() });
+            }
+            if let Some(rest) = token.strip_prefix("refs/remotes/") {
+                return Some(GitRef { name: rest.to_string(), kind: "remote".to_string() });
+            }
+            if let Some(rest) = token.strip_prefix("refs/tags/") {
+                return Some(GitRef { name: rest.to_string(), kind: "tag".to_string() });
+            }
+            // Unknown namespace (e.g. refs/notes, stash) — not a deletable branch/tag.
+            Some(GitRef { name: token.to_string(), kind: "unknown".to_string() })
+        })
+        .collect()
+}
+
 #[tauri::command]
 async fn git_log(state: State<'_, AppState>, limit: Option<usize>, skip: Option<usize>, all_branches: Option<bool>) -> Result<serde_json::Value, String> {
     let repo_path = match current_repo_path(&state) {
@@ -390,8 +482,8 @@ async fn git_log(state: State<'_, AppState>, limit: Option<usize>, skip: Option<
     let mut args = vec![
         "log",
         "--topo-order",
-        "--decorate=short",
-        "--pretty=format:%h|%p|%an|%ad|%s",
+        "--decorate=full",
+        "--pretty=format:%h|%p|%an|%ad|%d|%s",
         "--date=format-local:%Y-%m-%d %H:%M",
         max_count.as_str(),
         skip_arg.as_str(),
@@ -414,7 +506,8 @@ async fn git_log(state: State<'_, AppState>, limit: Option<usize>, skip: Option<
                 parents: parts.get(1).unwrap_or(&"").split_whitespace().map(String::from).collect(),
                 author: parts.get(2).unwrap_or(&"").trim().to_string(),
                 date: parts.get(3).unwrap_or(&"").trim().to_string(),
-                message: parts.get(4).unwrap_or(&"").trim().to_string(),
+                refs: parse_refs(parts.get(4).unwrap_or(&"")),
+                message: parts.get(5..).map(|rest| rest.join("|")).unwrap_or_default().trim().to_string(),
             }
         })
         .collect::<Vec<_>>();
@@ -546,6 +639,102 @@ async fn git_revert(state: State<'_, AppState>, commit: String) -> Result<serde_
     }
     git_error(run_git(&state, &["revert", commit.trim(), "--no-edit"])?, "Revert command failed")?;
     Ok(json!({ "success": true, "message": format!("Successfully reverted commit {}!", commit.trim()) }))
+}
+
+#[tauri::command]
+async fn git_cherry_pick(state: State<'_, AppState>, commit: String) -> Result<serde_json::Value, String> {
+    if commit.trim().is_empty() {
+        return Err("Commit hash is required".to_string());
+    }
+    let result = git_error(run_git(&state, &["cherry-pick", commit.trim()])?, "Cherry-pick failed")?;
+    Ok(json!({ "success": true, "message": result.stdout }))
+}
+
+#[tauri::command]
+async fn git_tag_create(state: State<'_, AppState>, name: String, commit: String, message: Option<String>) -> Result<serde_json::Value, String> {
+    if name.trim().is_empty() {
+        return Err("Tag name is required".to_string());
+    }
+    if commit.trim().is_empty() {
+        return Err("Commit hash is required".to_string());
+    }
+    let name = name.trim();
+    let commit = commit.trim();
+    let result = match message.as_deref().map(str::trim).filter(|m| !m.is_empty()) {
+        Some(msg) => git_error(run_git(&state, &["tag", "-a", name, commit, "-m", msg])?, "Failed to create tag")?,
+        None => git_error(run_git(&state, &["tag", name, commit])?, "Failed to create tag")?,
+    };
+    Ok(json!({ "success": true, "message": result.stdout }))
+}
+
+#[tauri::command]
+async fn git_branch_create_at(state: State<'_, AppState>, name: String, commit: String) -> Result<serde_json::Value, String> {
+    if name.trim().is_empty() {
+        return Err("Branch name is required".to_string());
+    }
+    if commit.trim().is_empty() {
+        return Err("Commit hash is required".to_string());
+    }
+    let result = git_error(run_git(&state, &["checkout", "-b", name.trim(), commit.trim()])?, "Failed to create branch")?;
+    Ok(json!({ "success": true, "message": result.stdout }))
+}
+
+#[tauri::command]
+async fn git_tag_delete(state: State<'_, AppState>, name: String) -> Result<serde_json::Value, String> {
+    if name.trim().is_empty() {
+        return Err("Tag name is required".to_string());
+    }
+    let result = git_error(run_git(&state, &["tag", "-d", name.trim()])?, "Failed to delete tag")?;
+    Ok(json!({ "success": true, "message": result.stdout }))
+}
+
+#[tauri::command]
+async fn git_branch_delete(state: State<'_, AppState>, name: String, force: Option<bool>) -> Result<serde_json::Value, String> {
+    if name.trim().is_empty() {
+        return Err("Branch name is required".to_string());
+    }
+    let flag = if force.unwrap_or(false) { "-D" } else { "-d" };
+    let result = git_error(run_git(&state, &["branch", flag, name.trim()])?, "Failed to delete branch")?;
+    Ok(json!({ "success": true, "message": result.stdout }))
+}
+
+#[tauri::command]
+async fn git_branch_rename(state: State<'_, AppState>, old_name: String, new_name: String) -> Result<serde_json::Value, String> {
+    if old_name.trim().is_empty() || new_name.trim().is_empty() {
+        return Err("Branch names are required".to_string());
+    }
+    let result = git_error(run_git(&state, &["branch", "-m", old_name.trim(), new_name.trim()])?, "Failed to rename branch")?;
+    Ok(json!({ "success": true, "message": result.stdout }))
+}
+
+#[tauri::command]
+async fn git_push(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let branch = run_git(&state, &["branch", "--show-current"])?.stdout;
+    if branch.is_empty() {
+        return Err("Not on a branch (detached HEAD); cannot push.".to_string());
+    }
+    let upstream = run_git(&state, &["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"])?;
+    let result = if upstream.code == 0 {
+        run_git_network(&state, &["push"])?
+    } else {
+        run_git_network(&state, &["push", "-u", "origin", branch.trim()])?
+    };
+    git_error(result, "Push failed")?;
+    Ok(json!({ "success": true }))
+}
+
+#[tauri::command]
+async fn git_pull(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let result = run_git_network(&state, &["pull"])?;
+    git_error(result, "Pull failed")?;
+    Ok(json!({ "success": true }))
+}
+
+#[tauri::command]
+async fn git_fetch(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let result = run_git_network(&state, &["fetch", "--all", "--prune"])?;
+    git_error(result, "Fetch failed")?;
+    Ok(json!({ "success": true }))
 }
 
 #[tauri::command]
@@ -757,6 +946,39 @@ async fn ai_test_connection() -> Result<serde_json::Value, String> {
     }
 }
 
+#[cfg(test)]
+mod ref_tests {
+    use super::*;
+
+    #[test]
+    fn parses_head_branch_tag_remote() {
+        let refs = parse_refs(" (HEAD -> refs/heads/main, tag: refs/tags/v1.0, refs/remotes/origin/main, refs/heads/feature/x)");
+        assert_eq!(refs.len(), 4);
+        assert_eq!(refs[0].name, "main");
+        assert_eq!(refs[0].kind, "head");
+        assert_eq!(refs[1].name, "v1.0");
+        assert_eq!(refs[1].kind, "tag");
+        assert_eq!(refs[2].name, "origin/main");
+        assert_eq!(refs[2].kind, "remote");
+        assert_eq!(refs[3].name, "feature/x");
+        assert_eq!(refs[3].kind, "branch");
+    }
+
+    #[test]
+    fn empty_decoration_yields_no_refs() {
+        assert!(parse_refs("").is_empty());
+        assert!(parse_refs("   ").is_empty());
+    }
+
+    #[test]
+    fn detached_head_alone() {
+        let refs = parse_refs(" (HEAD)");
+        assert_eq!(refs.len(), 1);
+        assert_eq!(refs[0].name, "HEAD");
+        assert_eq!(refs[0].kind, "head");
+    }
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -788,6 +1010,15 @@ pub fn run() {
             git_history,
             git_reset,
             git_revert,
+            git_cherry_pick,
+            git_tag_create,
+            git_branch_create_at,
+            git_tag_delete,
+            git_branch_delete,
+            git_branch_rename,
+            git_push,
+            git_pull,
+            git_fetch,
             sandbox_files,
             sandbox_file_write,
             sandbox_file_read,
