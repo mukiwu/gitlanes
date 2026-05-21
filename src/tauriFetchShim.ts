@@ -102,6 +102,19 @@ if (isTauriRuntime) {
         return invokeJson("git_ai_commit_message");
       case "/api/git/ai/explain-diff":
         return invokeJson("git_ai_explain_diff", { file: body.file, staged: body.staged });
+      case "/api/ai/settings":
+        return invokeJson("ai_settings_get");
+      case "/api/ai/settings/set":
+        return invokeJson("ai_settings_set", {
+          provider: body.provider,
+          model: body.model,
+          apiKey: body.apiKey,
+          endpoint: body.endpoint,
+        });
+      case "/api/ai/settings/clear-key":
+        return invokeJson("ai_settings_clear_key", { provider: body.provider });
+      case "/api/ai/test":
+        return invokeJson("ai_test_connection");
       default:
         return jsonResponse({ error: `Unknown API route: ${url.pathname}` }, 404);
     }
