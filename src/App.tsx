@@ -493,6 +493,10 @@ export default function App() {
     const v = Number(localStorage.getItem("gitlanes.layout.filesWidth"));
     return Number.isFinite(v) && v > 0 ? v : 280;
   });
+  const [inspectorLeftWidth, setInspectorLeftWidth] = useState<number>(() => {
+    const v = Number(localStorage.getItem("gitlanes.layout.inspectorLeftWidth"));
+    return Number.isFinite(v) && v > 0 ? v : 420;
+  });
 
   // Focus view states
   const [selectedCommit, setSelectedCommit] = useState<CommitNode | null>(null);
@@ -1338,6 +1342,7 @@ export default function App() {
   const persistGraphHeight = () => localStorage.setItem("gitlanes.layout.graphHeight", String(graphHeight));
   const persistTerminalHeight = () => localStorage.setItem("gitlanes.layout.terminalHeight", String(terminalHeight));
   const persistFilesWidth = () => localStorage.setItem("gitlanes.layout.filesWidth", String(workspaceFilesWidth));
+  const persistInspectorLeftWidth = () => localStorage.setItem("gitlanes.layout.inspectorLeftWidth", String(inspectorLeftWidth));
 
   const toggleTerminal = () => {
     setIsTerminalOpen((v) => {
@@ -2316,7 +2321,10 @@ export default function App() {
                     </div>
 
                     <div className="flex-1 flex overflow-hidden">
-                      <div className="w-[42%] min-w-[260px] p-5 overflow-auto space-y-4 border-r border-slate-800">
+                      <div
+                        style={{ width: inspectorLeftWidth }}
+                        className="min-w-[260px] p-5 overflow-auto space-y-4 shrink-0"
+                      >
                       <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
                         <div>
                           <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.authorLabel}</span>
@@ -2355,6 +2363,12 @@ export default function App() {
                         )}
                       </div>
                       </div>
+
+                      <Resizer
+                        orientation="vertical"
+                        onResize={(dx) => setInspectorLeftWidth((w) => clamp(w + dx, 260, 900))}
+                        onResizeEnd={persistInspectorLeftWidth}
+                      />
 
                       {/* Right panel: diff of the selected file in this commit */}
                       <div className="flex-1 min-w-0 overflow-hidden">
