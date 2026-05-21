@@ -169,6 +169,25 @@ fn run_git(state: &State<'_, AppState>, args: &[&str]) -> Result<CommandResult, 
     run_process(state, "git", args, &repo_path)
 }
 
+fn run_git_network(state: &State<'_, AppState>, args: &[&str]) -> Result<CommandResult, String> {
+    let repo_path = current_repo_path(state)?;
+    let output = Command::new("git")
+        .args(args)
+        .current_dir(&repo_path)
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .output()
+        .map_err(|err| format!("Failed to run git: {err}"))?;
+    let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+    let code = output.status.code().unwrap_or(1);
+    let command = format!(
+        "git {}",
+        args.iter().map(|arg| quote_arg(arg)).collect::<Vec<_>>().join(" ")
+    );
+    log_command(state, command, code, stdout.clone(), stderr.clone());
+    Ok(CommandResult { stdout, stderr, code })
+}
+
 fn safe_repo_path(base: &Path, file_path: &str) -> Result<PathBuf, String> {
     let base = base.canonicalize().unwrap_or_else(|_| base.to_path_buf());
     let target = base.join(file_path);
@@ -689,6 +708,36 @@ async fn git_branch_rename(state: State<'_, AppState>, old_name: String, new_nam
 }
 
 #[tauri::command]
+async fn git_push(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let branch = run_git(&state, &["branch", "--show-current"])?.stdout;
+    if branch.is_empty() {
+        return Err("Not on a branch (detached HEAD); cannot push.".to_string());
+    }
+    let upstream = run_git(&state, &["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"])?;
+    let result = if upstream.code == 0 {
+        run_git_network(&state, &["push"])?
+    } else {
+        run_git_network(&state, &["push", "-u", "origin", branch.trim()])?
+    };
+    git_error(result, "Push failed")?;
+    Ok(json!({ "success": true }))
+}
+
+#[tauri::command]
+async fn git_pull(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let result = run_git_network(&state, &["pull"])?;
+    git_error(result, "Pull failed")?;
+    Ok(json!({ "success": true }))
+}
+
+#[tauri::command]
+async fn git_fetch(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let result = run_git_network(&state, &["fetch", "--all", "--prune"])?;
+    git_error(result, "Fetch failed")?;
+    Ok(json!({ "success": true }))
+}
+
+#[tauri::command]
 async fn sandbox_files(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
     let repo_path = match current_repo_path(&state) {
         Ok(path) => path,
@@ -967,6 +1016,9 @@ pub fn run() {
             git_tag_delete,
             git_branch_delete,
             git_branch_rename,
+            git_push,
+            git_pull,
+            git_fetch,
             sandbox_files,
             sandbox_file_write,
             sandbox_file_read,
