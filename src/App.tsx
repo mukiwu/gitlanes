@@ -1743,8 +1743,13 @@ export default function App() {
     if (kind === "tag") {
       return [{ key: "deltag", label: `${t.menuDeleteTag} ${refName}`, danger: true, onSelect: () => handleDeleteTag(refName) }];
     }
+    // branch
     return [
-      { key: "delbranch", label: `${t.menuDeleteBranch} ${refName}`, onSelect: () => handleDeleteBranch(refName, false) },
+      { key: "checkout", label: t.menuCheckoutBranch, onSelect: () => handleCheckoutBranch(refName) },
+      { key: "merge", label: t.menuMergeBranch, onSelect: () => handleMergeBranchFromMenu(refName) },
+      { key: "rename", label: t.menuRenameBranch, dividerBefore: true, onSelect: () => setRenameModal({ branch: refName }) },
+      { key: "copy", label: t.menuCopyBranchName, onSelect: () => handleCopyBranchName(refName) },
+      { key: "delbranch", label: `${t.menuDeleteBranch} ${refName}`, dividerBefore: true, onSelect: () => handleDeleteBranch(refName, false) },
       { key: "forcedel", label: `${t.menuForceDeleteBranch} ${refName}`, danger: true, onSelect: () => handleDeleteBranch(refName, true) },
     ];
   };
@@ -2328,6 +2333,22 @@ export default function App() {
           y={refMenu.y}
           items={buildRefMenuItems(refMenu.refName, refMenu.kind)}
           onClose={() => setRefMenu(null)}
+        />
+      )}
+
+      {renameModal && (
+        <CommitInputModal
+          open
+          title={t.renameModalTitle}
+          fields={[{ key: "newName", label: t.renameNewNameLabel, placeholder: renameModal.branch, required: true }]}
+          confirmLabel={t.modalConfirm}
+          cancelLabel={t.modalCancel}
+          onConfirm={(values) => {
+            const oldName = renameModal.branch;
+            setRenameModal(null);
+            handleRenameBranch(oldName, values.newName.trim());
+          }}
+          onClose={() => setRenameModal(null)}
         />
       )}
 
