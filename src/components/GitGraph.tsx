@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CommitNode } from "../types";
-import { GitBranch, User, Clock, Check, Maximize2, Minimize2 } from "lucide-react";
+import { GitBranch, User, Clock, Check, Tag, Maximize2, Minimize2 } from "lucide-react";
 
 interface GitGraphLabels {
   title: string;
@@ -14,6 +14,8 @@ interface GitGraphProps {
   currentBranch: string;
   selectedCommit: CommitNode | null;
   onSelectCommit: (commit: CommitNode) => void;
+  onCommitContextMenu?: (commit: CommitNode, x: number, y: number) => void;
+  onRefContextMenu?: (ref: { name: string; kind: string }, x: number, y: number) => void;
   hasMore?: boolean;
   onLoadMore?: () => void;
   labels: GitGraphLabels;
@@ -27,6 +29,8 @@ export const GitGraph: React.FC<GitGraphProps> = ({
   currentBranch,
   selectedCommit,
   onSelectCommit,
+  onCommitContextMenu,
+  onRefContextMenu,
   hasMore = false,
   onLoadMore,
   labels,
@@ -260,6 +264,7 @@ export const GitGraph: React.FC<GitGraphProps> = ({
                 <button
                   key={commit.hash}
                   onClick={() => onSelectCommit(commit)}
+                  onContextMenu={(e) => { e.preventDefault(); onCommitContextMenu?.(commit, e.clientX, e.clientY); }}
                   style={{
                     left: `${layout.x - nodeRadius - 2}px`,
                     top: `${layout.y - nodeRadius - 2}px`,
@@ -284,13 +289,12 @@ export const GitGraph: React.FC<GitGraphProps> = ({
               if (!layout) return null;
 
               const isSelected = selectedCommit?.hash === commit.hash;
-              const index = commits.findIndex((item) => item.hash === commit.hash);
-              const isHead = index === 0;
 
               return (
                 <div
                   key={commit.hash}
                   onClick={() => onSelectCommit(commit)}
+                  onContextMenu={(e) => { e.preventDefault(); onCommitContextMenu?.(commit, e.clientX, e.clientY); }}
                   style={{
                     height: `${rowHeight}px`,
                     top: `${layout.y - rowHeight / 2}px`,
@@ -307,13 +311,29 @@ export const GitGraph: React.FC<GitGraphProps> = ({
                       {commit.hash}
                     </span>
 
-                    {/* Head tag indicator */}
-                    {isHead && (
-                      <span className="flex items-center space-x-0.5 bg-emerald-950 border border-emerald-800 text-emerald-400 text-[12px] px-1.5 py-0.5 rounded font-medium select-none shrink-0 uppercase">
-                        <Check className="h-2.5 w-2.5" />
-                        <span>HEAD</span>
-                      </span>
-                    )}
+                    {/* Ref decorations: branch / tag / HEAD / remote */}
+                    {commit.refs.map((r) => {
+                      const palette: Record<string, string> = {
+                        head: "bg-emerald-950 border-emerald-800 text-emerald-400",
+                        branch: "bg-cyan-950 border-cyan-800 text-cyan-300",
+                        tag: "bg-amber-950 border-amber-800 text-amber-300",
+                        remote: "bg-slate-800 border-slate-700 text-slate-400",
+                      };
+                      const deletable = r.kind === "tag" || r.kind === "branch";
+                      return (
+                        <span
+                          key={`${r.kind}:${r.name}`}
+                          onClick={(e) => e.stopPropagation()}
+                          onContextMenu={deletable ? (e) => { e.preventDefault(); e.stopPropagation(); onRefContextMenu?.(r, e.clientX, e.clientY); } : undefined}
+                          title={deletable ? `${r.name} — right-click to delete` : r.name}
+                          className={`flex items-center space-x-0.5 border text-[12px] px-1.5 py-0.5 rounded font-medium select-none shrink-0 ${palette[r.kind] ?? palette.branch} ${deletable ? "cursor-context-menu" : ""}`}
+                        >
+                          {r.kind === "tag" && <Tag className="h-2.5 w-2.5" />}
+                          {r.kind === "head" && <Check className="h-2.5 w-2.5" />}
+                          <span>{r.name}</span>
+                        </span>
+                      );
+                    })}
 
                     {/* Commit Message */}
                     <span className="truncate text-xs font-sans font-medium text-slate-200">
