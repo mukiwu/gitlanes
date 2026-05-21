@@ -104,6 +104,8 @@ if (isTauriRuntime) {
         return invokeJson("git_ai_explain_diff", { file: body.file, staged: body.staged });
       case "/api/ai/settings":
         return invokeJson("ai_settings_get");
+      case "/api/ai/settings/provider":
+        return invokeJson("ai_settings_provider_state", { provider: body.provider });
       case "/api/ai/settings/set":
         return invokeJson("ai_settings_set", {
           provider: body.provider,

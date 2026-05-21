@@ -39,32 +39,47 @@ fn default_model(provider: AiProvider) -> &'static str {
     }
 }
 
-pub fn load() -> Result<AiSettings, String> {
-    let provider = read("provider")
-        .and_then(|p| AiProvider::from_str(&p).ok())
-        .unwrap_or(AiProvider::Gemini);
-    let suffix = provider.as_key_suffix();
-
-    let model = read(&format!("model_{suffix}"))
+fn stored_model(provider: AiProvider) -> String {
+    read(&format!("model_{}", provider.as_key_suffix()))
         .filter(|m| !m.is_empty())
-        .unwrap_or_else(|| default_model(provider).to_string());
+        .unwrap_or_else(|| default_model(provider).to_string())
+}
 
-    let api_key = if matches!(provider, AiProvider::Ollama) {
-        None
-    } else {
-        read(&format!("apikey_{suffix}"))
-    };
-
-    let endpoint = match provider {
+fn stored_endpoint(provider: AiProvider) -> Option<String> {
+    match provider {
         AiProvider::Ollama => Some(
             read("endpoint_ollama")
                 .filter(|e| !e.is_empty())
                 .unwrap_or_else(|| "http://localhost:11434".to_string()),
         ),
         _ => None,
+    }
+}
+
+pub fn load() -> Result<AiSettings, String> {
+    let provider = read("provider")
+        .and_then(|p| AiProvider::from_str(&p).ok())
+        .unwrap_or(AiProvider::Gemini);
+
+    let api_key = if matches!(provider, AiProvider::Ollama) {
+        None
+    } else {
+        read(&format!("apikey_{}", provider.as_key_suffix()))
     };
 
-    Ok(AiSettings { provider, model, api_key, endpoint })
+    Ok(AiSettings {
+        provider,
+        model: stored_model(provider),
+        api_key,
+        endpoint: stored_endpoint(provider),
+    })
+}
+
+/// Returns (model, hasKey, endpoint) for a specific provider, without changing
+/// the active provider. Used by the settings modal to restore per-provider
+/// state when the user switches provider tabs.
+pub fn provider_state(provider: AiProvider) -> (String, bool, Option<String>) {
+    (stored_model(provider), has_key(provider), stored_endpoint(provider))
 }
 
 pub fn save(

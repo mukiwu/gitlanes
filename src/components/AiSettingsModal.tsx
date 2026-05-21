@@ -92,8 +92,20 @@ export const AiSettingsModal: React.FC<AiSettingsModalProps> = ({ open, onClose,
     setShowKey(false);
     setTestState("idle");
     setTestMessage("");
+    // Restore this provider's previously saved model + key status from the backend.
     const fallback = p === "ollama" ? "" : MODEL_OPTIONS[p][0];
-    applyProviderState(p, fallback, false, null);
+    fetch("/api/ai/settings/provider", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider: p }),
+    })
+      .then((res) => res.json())
+      .then((data: { model: string; hasKey: boolean; endpoint: string | null }) => {
+        applyProviderState(p, data.model || fallback, data.hasKey, data.endpoint);
+      })
+      .catch(() => {
+        applyProviderState(p, fallback, false, null);
+      });
   };
 
   const persist = async () => {

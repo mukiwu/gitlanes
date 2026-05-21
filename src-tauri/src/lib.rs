@@ -683,6 +683,13 @@ async fn ai_settings_get() -> Result<serde_json::Value, String> {
 }
 
 #[tauri::command]
+async fn ai_settings_provider_state(provider: String) -> Result<serde_json::Value, String> {
+    let provider = ai::AiProvider::from_str(&provider)?;
+    let (model, has_key, endpoint) = ai_settings::provider_state(provider);
+    Ok(json!({ "model": model, "hasKey": has_key, "endpoint": endpoint }))
+}
+
+#[tauri::command]
 async fn ai_settings_set(
     provider: String,
     model: String,
@@ -762,6 +769,7 @@ pub fn run() {
             git_ai_commit_message,
             git_ai_explain_diff,
             ai_settings_get,
+            ai_settings_provider_state,
             ai_settings_set,
             ai_settings_clear_key,
             ai_test_connection
