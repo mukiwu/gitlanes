@@ -671,6 +671,54 @@ async fn git_ai_explain_diff(state: State<'_, AppState>, file: String, staged: O
     Ok(json!({ "explanation": if explanation.is_empty() { "No explanation could be compiled.".to_string() } else { explanation } }))
 }
 
+#[tauri::command]
+async fn ai_settings_get() -> Result<serde_json::Value, String> {
+    let cfg = ai_settings::load()?;
+    Ok(json!({
+        "provider": cfg.provider.as_key_suffix(),
+        "model": cfg.model,
+        "hasKey": ai_settings::has_key(cfg.provider),
+        "endpoint": cfg.endpoint,
+    }))
+}
+
+#[tauri::command]
+async fn ai_settings_set(
+    provider: String,
+    model: String,
+    api_key: Option<String>,
+    endpoint: Option<String>,
+) -> Result<serde_json::Value, String> {
+    let provider = ai::AiProvider::from_str(&provider)?;
+    ai_settings::save(provider, &model, api_key.as_deref(), endpoint.as_deref())?;
+    Ok(json!({ "success": true }))
+}
+
+#[tauri::command]
+async fn ai_settings_clear_key(provider: String) -> Result<serde_json::Value, String> {
+    let provider = ai::AiProvider::from_str(&provider)?;
+    ai_settings::clear_key(provider)?;
+    Ok(json!({ "success": true }))
+}
+
+#[tauri::command]
+async fn ai_test_connection() -> Result<serde_json::Value, String> {
+    let cfg = ai_settings::load()?;
+    match ai::ai_generate(
+        cfg.provider,
+        &cfg.model,
+        cfg.api_key.as_deref(),
+        cfg.endpoint.as_deref(),
+        "ping",
+        Some("Reply with the single word: pong"),
+    )
+    .await
+    {
+        Ok(_) => Ok(json!({ "ok": true })),
+        Err(message) => Ok(json!({ "ok": false, "message": message })),
+    }
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -709,7 +757,11 @@ pub fn run() {
             git_stash_save,
             git_stash_pop,
             git_ai_commit_message,
-            git_ai_explain_diff
+            git_ai_explain_diff,
+            ai_settings_get,
+            ai_settings_set,
+            ai_settings_clear_key,
+            ai_test_connection
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
