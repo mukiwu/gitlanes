@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+build/
+dist/
+dist-ssr/
+src-tauri/gen/
+src-tauri/target/
+coverage/
+*.tsbuildinfo
+*.local
+
+# Secrets / env (keep the example)
+.env*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

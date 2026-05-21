@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+/* Bind the app to the full viewport so it reflows when the OS window resizes. */
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+@theme {
+  /* Vitesse Dark backgrounds */
+  --color-slate-950: #121212;
+  --color-slate-900: #151515;
+  --color-slate-850: #1c1c1c;
+  --color-slate-800: #222222;
+  --color-slate-700: #333333;
+  --color-slate-650: #3e3e3e;
+  --color-slate-600: #484848;
+  --color-slate-500: #6a737d;
+  --color-slate-400: #889999;
+  --color-slate-350: #b8c2c2;
+  --color-slate-300: #ccd5d5;
+  --color-slate-200: #dbdfdf;
+  --color-slate-100: #fcfcfc;
+
+  /* Vitesse Dark accent colors */
+  --color-cyan-700: #2d6b4f;
+  --color-cyan-600: #31825c;
+  --color-cyan-500: #41b883;
+  --color-cyan-400: #4fc48a;
+
+  /* Violet / Purple (Cloning/Git references) */
+  --color-purple-700: #885bb3;
+  --color-purple-600: #9e6ec9;
+  --color-purple-500: #b88edb;
+
+  /* Amber / Orange (Modified files/Warnings) */
+  --color-amber-600: #c97e3a;
+  --color-amber-500: #db9d52;
+  --color-amber-400: #e5b567;
+
+  /* Rose / Red (Deleted/Wipe actions) */
+  --color-rose-650: #bd4545;
+  --color-rose-600: #c45a5a;
+  --color-rose-500: #db7b7b;
+
+  /* Emerald / Green (Staged changes) */
+  --color-emerald-600: #2c8558;
+  --color-emerald-500: #3eaf7c;
+}
+
+.lang-zh {
+  font-size: 14px;
+}
+
+.lang-zh :where(p, label, input, textarea, select, button, span, pre, div) {
+  font-size: 14px;
+}
+
+.lang-zh :where(
+  .text-\[9px\],
+  .text-\[10px\],
+  .text-\[11px\],
+  .text-xs
+) {
+  font-size: 13px !important;
+}
+
+.lang-zh :where(.text-sm) {
+  font-size: 14px !important;
+}

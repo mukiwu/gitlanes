@@ -1,0 +1,6 @@
+{
+  "name": "Git GUI",
+  "description": "A fully interactive Git GUI and sandbox repository simulator. Make commits, visualize branches in a DAG, stage and diff changes, and use Gemini to explain code changes or generate commit messages.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
