@@ -39,6 +39,9 @@ import { CommitInputModal } from "./components/CommitInputModal";
 import { Resizer } from "./components/Resizer";
 import { TerminalPanel, TerminalPanelLabels } from "./components/TerminalPanel";
 import { XTermView } from "./components/XTermView";
+import { UpdateModal, UpdateModalLabels } from "./components/UpdateModal";
+import { check, Update } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 
 type Language = "en" | "zh";
 
@@ -167,6 +170,17 @@ const translations = {
     confirmRevertMessage: "Creates a new commit that undoes the changes from this commit — like reversing what it did. History is kept intact, so this is a safe way to undo.",
     confirmRevertBtn: "Confirm Revert",
     aiSettings: "AI Settings",
+    checkForUpdates: "Check for updates…",
+    noUpdateAvailable: "You're on the latest version.",
+    updateAvailable: (v: string) => `Version ${v} is available`,
+    updateCurrent: (v: string) => `Current: ${v}`,
+    updateNotes: "Release notes",
+    updateFullNotesLink: "View full release notes",
+    updateInstall: "Install and restart",
+    updateLater: "Later",
+    updateInstalling: "Installing…",
+    updateFailed: "Update failed",
+    updateCheckFailed: "Couldn't check for updates",
     aiSettingsTitle: "AI Settings",
     aiProvider: "Provider",
     aiModel: "Model",
@@ -361,6 +375,17 @@ const translations = {
     confirmRevertMessage: "會新增一個 commit 來「抵銷」這個 commit 的變更，等於把它做的事反向做一次。歷史會完整保留，是安全的還原方式。",
     confirmRevertBtn: "確認 Revert",
     aiSettings: "AI 設定",
+    checkForUpdates: "檢查更新…",
+    noUpdateAvailable: "已是最新版本。",
+    updateAvailable: (v: string) => `有新版本 ${v}`,
+    updateCurrent: (v: string) => `目前：${v}`,
+    updateNotes: "更新說明",
+    updateFullNotesLink: "查看完整更新說明",
+    updateInstall: "安裝並重啟",
+    updateLater: "之後再說",
+    updateInstalling: "安裝中…",
+    updateFailed: "更新失敗",
+    updateCheckFailed: "無法檢查更新",
     aiSettingsTitle: "AI 設定",
     aiProvider: "供應商",
     aiModel: "模型",
@@ -467,6 +492,14 @@ export default function App() {
   const [isRepoPanelOpen, setIsRepoPanelOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isAiSettingsOpen, setIsAiSettingsOpen] = useState<boolean>(false);
+  const [updateState, setUpdateState] = useState<{
+    open: boolean;
+    version: string;
+    notes: string;
+    update: Update | null;
+    releaseUrl: string;
+  }>({ open: false, version: "", notes: "", update: null, releaseUrl: "" });
+  const [isInstallingUpdate, setIsInstallingUpdate] = useState<boolean>(false);
   const [currentBranch, setCurrentBranch] = useState<string>("main");
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [aheadBehind, setAheadBehind] = useState<{ hasUpstream: boolean; ahead: number; behind: number }>({ hasUpstream: false, ahead: 0, behind: 0 });
@@ -674,6 +707,15 @@ export default function App() {
 
   useEffect(() => {
     refreshState();
+  }, []);
+
+  // Background check for updates 5 seconds after startup (silent — only prompts if a new version exists).
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkForUpdate({ silent: true });
+    }, 5000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -1342,6 +1384,41 @@ export default function App() {
   const handlePush = () => runSync("/api/git/push", t.toastPushDone, "Push failed");
   const handleFetch = () => runSync("/api/git/fetch", t.toastFetchDone, "Fetch failed");
 
+  const APP_VERSION = "0.1.0";
+
+  const checkForUpdate = async (opts?: { silent?: boolean }) => {
+    try {
+      const update = await check();
+      if (update) {
+        setUpdateState({
+          open: true,
+          version: update.version,
+          notes: update.body ?? "",
+          update,
+          releaseUrl: `https://github.com/mukiwu/gitlanes/releases/tag/v${update.version}`,
+        });
+      } else if (!opts?.silent) {
+        showToast(t.noUpdateAvailable);
+      }
+    } catch (err: unknown) {
+      if (!opts?.silent) {
+        showToast(err instanceof Error ? err.message : t.updateCheckFailed, true);
+      }
+    }
+  };
+
+  const handleInstallUpdate = async () => {
+    if (!updateState.update) return;
+    setIsInstallingUpdate(true);
+    try {
+      await updateState.update.downloadAndInstall();
+      await relaunch();
+    } catch (err: unknown) {
+      setIsInstallingUpdate(false);
+      showToast(err instanceof Error ? err.message : t.updateFailed, true);
+    }
+  };
+
   const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
   const persistGraphHeight = () => localStorage.setItem("gitlanes.layout.graphHeight", String(graphHeight));
@@ -2009,6 +2086,17 @@ export default function App() {
                     {t.aiSettings}
                   </button>
 
+                  <button
+                    onClick={() => {
+                      setIsSettingsOpen(false);
+                      checkForUpdate({ silent: false });
+                    }}
+                    className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs text-slate-300 hover:bg-slate-800/60 rounded font-mono cursor-pointer"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+                    {t.checkForUpdates}
+                  </button>
+
                   <div className="my-1 border-t border-slate-800" />
 
                   {/* Close repository */}
@@ -2499,6 +2587,26 @@ export default function App() {
           save: t.aiSave,
           keyStoredHint: t.aiKeyStoredHint,
         } satisfies AiSettingsLabels}
+      />
+
+      <UpdateModal
+        open={updateState.open}
+        version={updateState.version}
+        currentVersion={APP_VERSION}
+        notes={updateState.notes}
+        releaseUrl={updateState.releaseUrl}
+        onInstall={handleInstallUpdate}
+        onLater={() => setUpdateState((s) => ({ ...s, open: false }))}
+        isInstalling={isInstallingUpdate}
+        labels={{
+          available: t.updateAvailable,
+          current: t.updateCurrent,
+          notes: t.updateNotes,
+          viewFullNotes: t.updateFullNotesLink,
+          install: t.updateInstall,
+          later: t.updateLater,
+          installing: t.updateInstalling,
+        } satisfies UpdateModalLabels}
       />
 
       {contextMenu && (
