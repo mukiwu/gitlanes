@@ -913,6 +913,7 @@ export default function App() {
 
     try {
       const settingsRes = await fetch("/api/ai/settings");
+      if (!settingsRes.ok) throw new Error("Could not load AI settings");
       const settings = await settingsRes.json();
       if (!settings.hasKey) {
         showToast(t.toastSetupAiFirst, true);
