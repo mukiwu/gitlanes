@@ -227,7 +227,6 @@ const translations = {
     confirmMergeBranchTitle: (name: string) => `Merge branch ${name}?`,
     confirmMergeBranchMessage: (name: string) => `Merges the changes from branch ${name} into your current branch. If both sides changed the same lines you'll get conflicts to resolve manually.`,
     confirmMergeBranchBtn: "Merge",
-    toastBranchCheckedOut: (name: string) => `Switched to branch ${name}.`,
     toastBranchMerged: (name: string) => `Branch ${name} merged into current branch.`,
     toastBranchRenamed: (name: string) => `Branch renamed to ${name}.`,
     toastCopiedBranch: "Branch name copied to clipboard.",
@@ -411,7 +410,6 @@ const translations = {
     confirmMergeBranchTitle: (name: string) => `合併分支 ${name}？`,
     confirmMergeBranchMessage: (name: string) => `會把分支 ${name} 的變更合併進你目前的分支。如果兩邊改到同一處會產生衝突，需要你手動解決。`,
     confirmMergeBranchBtn: "合併",
-    toastBranchCheckedOut: (name: string) => `已切換到分支 ${name}。`,
     toastBranchMerged: (name: string) => `已將分支 ${name} 合併進目前分支。`,
     toastBranchRenamed: (name: string) => `分支已重新命名為 ${name}。`,
     toastCopiedBranch: "已複製分支名稱到剪貼簿。",
@@ -1220,23 +1218,6 @@ export default function App() {
       force ? t.confirmForceDeleteBranchBtn : t.confirmDeleteBranchBtn,
       "bg-rose-600 hover:bg-rose-500"
     );
-  };
-
-  const handleCheckoutBranchFromMenu = async (name: string) => {
-    try {
-      const res = await fetch("/api/git/branch/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Checkout failed");
-      showToast(t.toastBranchCheckedOut(name));
-      setSelectedCommit(null);
-      refreshState();
-    } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : "Checkout failed", true);
-    }
   };
 
   const handleMergeBranchFromMenu = (name: string) => {
