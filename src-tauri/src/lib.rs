@@ -12,6 +12,7 @@ use ignore::WalkBuilder;
 
 mod ai;
 mod ai_settings;
+mod terminal;
 
 #[derive(Debug, Serialize, Clone)]
 struct CommandLog {
