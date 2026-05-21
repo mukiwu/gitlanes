@@ -177,6 +177,9 @@ const translations = {
     aiSave: "Save",
     aiKeyStoredHint: "A key is stored. Leave blank to keep it.",
     toastSetupAiFirst: "Please set up an AI provider first.",
+    changedFiles: "Changed Files",
+    noChangedFiles: "No file changes in this commit.",
+    selectFileForDiff: "Select a file to view its diff.",
   },
   zh: {
     appTitle: "GitLanes",
@@ -309,6 +312,9 @@ const translations = {
     aiSave: "儲存",
     aiKeyStoredHint: "已儲存金鑰，留空則保留現有金鑰。",
     toastSetupAiFirst: "請先設定 AI provider。",
+    changedFiles: "更動的檔案",
+    noChangedFiles: "這個 commit 沒有檔案更動。",
+    selectFileForDiff: "選擇檔案以檢視 diff。",
   },
 };
 
@@ -355,6 +361,8 @@ export default function App() {
   // Focus view states
   const [selectedCommit, setSelectedCommit] = useState<CommitNode | null>(null);
   const [diffTarget, setDiffTarget] = useState<{ path: string; staged: boolean } | null>(null);
+  const [commitFiles, setCommitFiles] = useState<{ status: string; path: string }[]>([]);
+  const [commitDiffFile, setCommitDiffFile] = useState<string | null>(null);
   
   // Form input states
   const [commitMessage, setCommitMessage] = useState<string>("");
@@ -524,6 +532,29 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
   }, [language]);
+
+  // Load the changed-file list whenever a commit is selected.
+  useEffect(() => {
+    if (!selectedCommit) {
+      setCommitFiles([]);
+      setCommitDiffFile(null);
+      return;
+    }
+    setCommitDiffFile(null);
+    fetch("/api/git/commit/files", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ commit: selectedCommit.hash }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const files = Array.isArray(data.files) ? data.files : [];
+        setCommitFiles(files);
+        // Auto-open the first file's diff so the right panel isn't empty.
+        if (files.length > 0) setCommitDiffFile(files[0].path);
+      })
+      .catch(() => setCommitFiles([]));
+  }, [selectedCommit]);
 
   // Quick success helper
   const showToast = (message: string, isErr = false) => {
@@ -1815,7 +1846,8 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="flex-1 p-5 overflow-auto space-y-4">
+                <div className="flex-1 flex overflow-hidden">
+                  <div className="w-[42%] min-w-[260px] p-5 overflow-auto space-y-4 border-r border-slate-800">
                   <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
                     <div>
                       <span className="text-[10px] text-slate-500 block font-mono font-bold uppercase">{t.authorLabel}</span>
@@ -1911,6 +1943,51 @@ export default function App() {
                         Revert Commit
                       </button>
                     </div>
+                  </div>
+
+                  {/* Changed files in this commit */}
+                  <div>
+                    <h5 className="text-slate-400 text-xs font-bold font-mono uppercase tracking-wider mb-2">{t.changedFiles} ({commitFiles.length})</h5>
+                    {commitFiles.length === 0 ? (
+                      <span className="text-slate-600 text-[11px] font-mono italic">{t.noChangedFiles}</span>
+                    ) : (
+                      <div className="space-y-1 bg-slate-950/60 p-1.5 rounded-lg border border-slate-850">
+                        {commitFiles.map((file) => (
+                          <button
+                            key={file.path}
+                            onClick={() => setCommitDiffFile(file.path)}
+                            className={`w-full flex items-center space-x-2 text-xs px-2 py-1.5 rounded transition-colors text-left ${
+                              commitDiffFile === file.path ? "bg-cyan-950/40 border border-cyan-800/60" : "bg-slate-900/30 hover:bg-slate-900/80 border border-transparent"
+                            }`}
+                          >
+                            <span className="text-[9px] px-1 bg-slate-800 text-slate-300 rounded font-semibold shrink-0 uppercase w-5 text-center">{file.status.charAt(0)}</span>
+                            <span className="font-mono text-[11px] text-slate-300 truncate" title={file.path}>{file.path}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  </div>
+
+                  {/* Right panel: diff of the selected file in this commit */}
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    {commitDiffFile ? (
+                      <DiffViewer
+                        key={`${selectedCommit.hash}:${commitDiffFile}`}
+                        file={commitDiffFile}
+                        staged={false}
+                        commitHash={selectedCommit.hash}
+                        onClose={() => setCommitDiffFile(null)}
+                        onNeedAiSetup={() => {
+                          showToast(t.toastSetupAiFirst, true);
+                          setIsAiSettingsOpen(true);
+                        }}
+                      />
+                    ) : (
+                      <div className="h-full flex items-center justify-center text-slate-600 text-xs font-mono italic px-6 text-center">
+                        {t.selectFileForDiff}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -70,6 +70,8 @@ if (isTauriRuntime) {
           staged: query.get("staged") === "true",
           commit: query.get("commit") || undefined,
         });
+      case "/api/git/commit/files":
+        return invokeJson("git_commit_files", { commit: body.commit });
       case "/api/git/branches":
         return invokeJson("git_branches");
       case "/api/git/branch/create":

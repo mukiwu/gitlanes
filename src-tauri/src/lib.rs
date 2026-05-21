@@ -438,6 +438,28 @@ async fn git_diff(state: State<'_, AppState>, file: String, staged: Option<bool>
 }
 
 #[tauri::command]
+async fn git_commit_files(state: State<'_, AppState>, commit: String) -> Result<serde_json::Value, String> {
+    if commit.trim().is_empty() {
+        return Err("commit is required".to_string());
+    }
+    let result = run_git(&state, &["show", "--name-status", "--format=", &commit])?;
+    let files: Vec<serde_json::Value> = result
+        .stdout
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| {
+            let mut parts = line.split('\t');
+            let status = parts.next().unwrap_or("").trim().to_string();
+            // For renames/copies (e.g. "R100\told\tnew") the new path is the last column.
+            let path = parts.last().unwrap_or("").trim().to_string();
+            json!({ "status": status, "path": path })
+        })
+        .filter(|file| !file["path"].as_str().unwrap_or("").is_empty())
+        .collect();
+    Ok(json!({ "files": files }))
+}
+
+#[tauri::command]
 async fn git_branches(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
     let repo_path = match current_repo_path(&state) {
         Ok(path) => path,
@@ -752,6 +774,7 @@ pub fn run() {
             git_commit,
             git_log,
             git_diff,
+            git_commit_files,
             git_branches,
             git_branch_create,
             git_branch_checkout,
