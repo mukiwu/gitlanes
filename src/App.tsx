@@ -31,6 +31,8 @@ import { GitGraph } from "./components/GitGraph";
 import { CodeEditor } from "./components/CodeEditor";
 import { DiffViewer } from "./components/DiffViewer";
 import { AiSettingsModal, AiSettingsLabels } from "./components/AiSettingsModal";
+import { CommitContextMenu, CommitContextMenuItem } from "./components/CommitContextMenu";
+import { CommitInputModal } from "./components/CommitInputModal";
 
 type Language = "en" | "zh";
 
@@ -149,16 +151,16 @@ const translations = {
     toastReverted: (hash: string) => `Successfully reverted commit ${hash}!`,
     toastCheckedOut: (hash: string) => `Successfully checked out HEAD to commit ${hash}`,
     confirmCheckoutTitle: (hash: string) => `Hard Checkout HEAD to Commit ${hash}?`,
-    confirmCheckoutMessage: "Are you sure you want to hard checkout HEAD to this commit? Warning: Stashed and uncommitted modifications in this repository will be overwritten.",
+    confirmCheckoutMessage: "Switches your working copy to this commit to inspect it (detached HEAD) — you won't be on any branch. New commits made here can be lost unless you create a branch to keep them.",
     confirmCheckoutBtn: "Confirm Checkout",
     confirmHardResetTitle: (hash: string) => `Hard Reset HEAD to Commit ${hash}?`,
-    confirmHardResetMessage: "WARNING: This runs 'git reset --hard'. Any modified/uncommitted playground codes and files WILL be deleted permanently to match this commit state.",
+    confirmHardResetMessage: "⚠️ Moves your current branch back to this commit and DISCARDS every commit after it as well as any uncommitted changes. This cannot be undone — please be sure.",
     confirmHardResetBtn: "Confirm Hard Reset",
     confirmSoftResetTitle: (hash: string) => `Soft Reset HEAD to Commit ${hash}?`,
-    confirmSoftResetMessage: "This runs 'git reset --soft'. Your active modifications are kept, but the HEAD is moved back to this commit so you can re-commit changes.",
+    confirmSoftResetMessage: "Moves your current branch back to this commit, but keeps all your working changes and staged files. Often used to re-shape recent commits.",
     confirmSoftResetBtn: "Confirm Soft Reset",
     confirmRevertTitle: (hash: string) => `Revert Commit ${hash}?`,
-    confirmRevertMessage: "This runs 'git revert --no-edit'. A new commit will be automatically created that cleanly rollbacks / cancels the edits in this selected commit.",
+    confirmRevertMessage: "Creates a new commit that undoes the changes from this commit — like reversing what it did. History is kept intact, so this is a safe way to undo.",
     confirmRevertBtn: "Confirm Revert",
     aiSettings: "AI Settings",
     aiSettingsTitle: "AI Settings",
@@ -178,6 +180,45 @@ const translations = {
     changedFiles: "Changed Files",
     noChangedFiles: "No file changes in this commit.",
     selectFileForDiff: "Select a file to view its diff.",
+    menuCheckout: "Checkout this commit",
+    menuCherryPick: "Cherry-pick onto current branch",
+    menuRevert: "Revert this commit",
+    menuResetSoft: "Reset --soft to here",
+    menuResetHard: "Reset --hard to here",
+    menuCreateTag: "Create tag here…",
+    menuCreateBranch: "Create branch here…",
+    menuCopySha: "Copy SHA",
+    menuCopyMessage: "Copy message",
+    menuDeleteTag: "Delete tag",
+    menuDeleteBranch: "Delete branch",
+    menuForceDeleteBranch: "Force delete branch",
+    tagModalTitle: "Create Tag",
+    tagNameLabel: "Tag name",
+    tagMessageLabel: "Message (optional — annotated tag)",
+    branchModalTitle: "Create Branch",
+    branchNameLabel: "Branch name",
+    modalConfirm: "Create",
+    modalCancel: "Cancel",
+    confirmCherryPickTitle: (hash: string) => `Cherry-pick commit ${hash}?`,
+    confirmCherryPickMessage: (hash: string) => `Copies the changes from commit ${hash} and applies them onto your current branch as a new commit. The original commit stays where it is. If the changes conflict, you'll need to resolve them manually.`,
+    confirmCherryPickBtn: "Cherry-pick",
+    confirmDeleteTagTitle: (name: string) => `Delete tag ${name}?`,
+    confirmDeleteTagMessage: (name: string) => `Deletes the tag ${name}. A tag is just a bookmark pointing at a commit — removing it doesn't affect any commit or your code.`,
+    confirmDeleteTagBtn: "Delete tag",
+    confirmDeleteBranchTitle: (name: string) => `Delete branch ${name}?`,
+    confirmDeleteBranchMessage: (name: string) => `Deletes the branch ${name}. If this branch hasn't been merged elsewhere, git will block it to warn you (so you don't lose work).`,
+    confirmDeleteBranchBtn: "Delete branch",
+    confirmForceDeleteBranchTitle: (name: string) => `Force delete branch ${name}?`,
+    confirmForceDeleteBranchMessage: (name: string) => `⚠️ FORCE-deletes the branch ${name} even if it hasn't been merged. Any commits that exist only on this branch may be lost. Please be sure.`,
+    confirmForceDeleteBranchBtn: "Force delete",
+    toastCherryPicked: "Cherry-pick applied to current branch.",
+    toastTagCreated: (name: string) => `Tag ${name} created.`,
+    toastBranchCreatedAt: (name: string) => `Branch ${name} created and checked out.`,
+    toastCopiedSha: "Commit SHA copied to clipboard.",
+    toastCopiedMessage: "Commit message copied to clipboard.",
+    toastCopyFailed: "Copy failed.",
+    toastTagDeleted: (name: string) => `Tag ${name} deleted.`,
+    toastBranchDeleted: (name: string) => `Branch ${name} deleted.`,
   },
   zh: {
     appTitle: "GitLanes",
@@ -282,16 +323,16 @@ const translations = {
     toastReverted: (hash: string) => `已成功 revert commit ${hash}！`,
     toastCheckedOut: (hash: string) => `已成功將 HEAD checkout 到 commit ${hash}`,
     confirmCheckoutTitle: (hash: string) => `將 HEAD 強制 checkout 到 commit ${hash}？`,
-    confirmCheckoutMessage: "確定要將 HEAD 強制 checkout 到這個 commit 嗎？警告：此儲存庫中 stash 與未 commit 的修改將被覆蓋。",
+    confirmCheckoutMessage: "會切換到這個 commit 的狀態來檢視（detached HEAD）——你會暫時不在任何分支上。在這個狀態下做的新 commit，要記得另外開分支才能保存，否則可能會遺失。",
     confirmCheckoutBtn: "確認 Checkout",
     confirmHardResetTitle: (hash: string) => `將 HEAD 硬重置到 commit ${hash}？`,
-    confirmHardResetMessage: "警告：這會執行 'git reset --hard'。任何已修改／未 commit 的程式碼與檔案將被永久刪除，以符合此 commit 狀態。",
+    confirmHardResetMessage: "⚠️ 會把目前分支移回這個 commit，並且「丟棄」這個 commit 之後的所有 commit，以及尚未提交的改動。這個動作無法復原，請確認。",
     confirmHardResetBtn: "確認硬重置",
     confirmSoftResetTitle: (hash: string) => `將 HEAD 軟重置到 commit ${hash}？`,
-    confirmSoftResetMessage: "這會執行 'git reset --soft'。你目前的修改會保留，但 HEAD 會移回此 commit，讓你可以重新 commit。",
+    confirmSoftResetMessage: "會把目前分支的指標移回這個 commit，但你工作區和已 stage 的檔案改動都會保留下來。常用來把後面幾個 commit 重新整理成一個。",
     confirmSoftResetBtn: "確認軟重置",
     confirmRevertTitle: (hash: string) => `Revert commit ${hash}？`,
-    confirmRevertMessage: "這會執行 'git revert --no-edit'。系統會自動建立一個新 commit，乾淨地回復／取消此 commit 的變更。",
+    confirmRevertMessage: "會新增一個 commit 來「抵銷」這個 commit 的變更，等於把它做的事反向做一次。歷史會完整保留，是安全的還原方式。",
     confirmRevertBtn: "確認 Revert",
     aiSettings: "AI 設定",
     aiSettingsTitle: "AI 設定",
@@ -311,6 +352,45 @@ const translations = {
     changedFiles: "更動的檔案",
     noChangedFiles: "這個 commit 沒有檔案更動。",
     selectFileForDiff: "選擇檔案以檢視 diff。",
+    menuCheckout: "Checkout 到這個 commit",
+    menuCherryPick: "Cherry-pick 到目前分支",
+    menuRevert: "Revert 這個 commit",
+    menuResetSoft: "Reset --soft 到這裡",
+    menuResetHard: "Reset --hard 到這裡",
+    menuCreateTag: "在這裡打 tag…",
+    menuCreateBranch: "從這裡開分支…",
+    menuCopySha: "複製 SHA",
+    menuCopyMessage: "複製訊息",
+    menuDeleteTag: "刪除 tag",
+    menuDeleteBranch: "刪除分支",
+    menuForceDeleteBranch: "強制刪除分支",
+    tagModalTitle: "建立 Tag",
+    tagNameLabel: "Tag 名稱",
+    tagMessageLabel: "訊息（選填 — 會建立 annotated tag）",
+    branchModalTitle: "建立分支",
+    branchNameLabel: "分支名稱",
+    modalConfirm: "建立",
+    modalCancel: "取消",
+    confirmCherryPickTitle: (hash: string) => `Cherry-pick commit ${hash}？`,
+    confirmCherryPickMessage: (hash: string) => `會把 commit ${hash} 的變更「複製」一份套用到你目前的分支，產生一個新的 commit。原本的 commit 不會被移動。如果內容有衝突，需要你手動解決。`,
+    confirmCherryPickBtn: "Cherry-pick",
+    confirmDeleteTagTitle: (name: string) => `刪除 tag ${name}？`,
+    confirmDeleteTagMessage: (name: string) => `會刪除標籤 ${name}。標籤只是指向某個 commit 的書籤，刪掉它不會影響任何 commit 或程式碼。`,
+    confirmDeleteTagBtn: "刪除 tag",
+    confirmDeleteBranchTitle: (name: string) => `刪除分支 ${name}？`,
+    confirmDeleteBranchMessage: (name: string) => `會刪除分支 ${name}。如果這個分支的內容還沒被合併到別的分支，git 會擋下來提醒你（避免遺失工作）。`,
+    confirmDeleteBranchBtn: "刪除分支",
+    confirmForceDeleteBranchTitle: (name: string) => `強制刪除分支 ${name}？`,
+    confirmForceDeleteBranchMessage: (name: string) => `⚠️ 會「強制」刪除分支 ${name}，即使它還沒被合併。這個分支上只存在於它身上、還沒合併的 commit 可能會遺失。請確認。`,
+    confirmForceDeleteBranchBtn: "強制刪除",
+    toastCherryPicked: "已 cherry-pick 到目前分支。",
+    toastTagCreated: (name: string) => `已建立 tag ${name}。`,
+    toastBranchCreatedAt: (name: string) => `已建立並切換到分支 ${name}。`,
+    toastCopiedSha: "已複製 commit SHA 到剪貼簿。",
+    toastCopiedMessage: "已複製 commit 訊息到剪貼簿。",
+    toastCopyFailed: "複製失敗。",
+    toastTagDeleted: (name: string) => `已刪除 tag ${name}。`,
+    toastBranchDeleted: (name: string) => `已刪除分支 ${name}。`,
   },
 };
 
@@ -354,6 +434,9 @@ export default function App() {
 
   // Focus view states
   const [selectedCommit, setSelectedCommit] = useState<CommitNode | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ commit: CommitNode; x: number; y: number } | null>(null);
+  const [refMenu, setRefMenu] = useState<{ refName: string; kind: string; x: number; y: number } | null>(null);
+  const [inputModal, setInputModal] = useState<{ mode: "tag" | "branch"; commit: CommitNode } | null>(null);
   const [diffTarget, setDiffTarget] = useState<{ path: string; staged: boolean } | null>(null);
   const [commitFiles, setCommitFiles] = useState<{ status: string; path: string }[]>([]);
   const [commitDiffFile, setCommitDiffFile] = useState<string | null>(null);
@@ -1848,88 +1931,6 @@ export default function App() {
                     <div className="col-span-2">
                       <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.subjectLabel}</span>
                       <pre className="text-slate-200 text-xs font-semibold font-mono whitespace-pre-wrap bg-slate-950 p-2 border border-slate-900 rounded mt-1">{selectedCommit.message}</pre>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h5 className="text-slate-400 text-xs font-bold font-mono uppercase tracking-wider mb-2">{t.workspaceActions}</h5>
-                    <div className="flex flex-wrap gap-2.5">
-                      <button
-                        onClick={() => {
-                          requestConfirm(
-                            t.confirmCheckoutTitle(selectedCommit.hash),
-                            t.confirmCheckoutMessage,
-                            async () => {
-                              setIsActionLoading(true);
-                              try {
-                                const res = await fetch("/api/git/branch/checkout", {
-                                  method: "POST",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ name: selectedCommit.hash }),
-                                });
-                                if (!res.ok) throw new Error("Hard checkout error");
-                                showToast(t.toastCheckedOut(selectedCommit.hash));
-                                setSelectedCommit(null);
-                                refreshState();
-                              } catch (err: any) {
-                                showToast(err.message, true);
-                              } finally {
-                                setIsActionLoading(false);
-                              }
-                            },
-                            t.confirmCheckoutBtn,
-                            "bg-amber-600 hover:bg-amber-500"
-                          );
-                        }}
-                        className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono px-3.5 py-2 rounded-md transition-colors cursor-pointer"
-                      >
-                        Checkout Commit [{selectedCommit.hash}]
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          requestConfirm(
-                            t.confirmHardResetTitle(selectedCommit.hash),
-                            t.confirmHardResetMessage,
-                            () => handleGitReset(selectedCommit.hash, "hard"),
-                            t.confirmHardResetBtn,
-                            "bg-rose-600 hover:bg-rose-500"
-                          );
-                        }}
-                        className="bg-rose-950/40 border border-rose-800 hover:bg-rose-900/60 text-rose-300 text-xs font-mono px-3.5 py-2 rounded-md transition-colors cursor-pointer"
-                      >
-                        Reset --hard
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          requestConfirm(
-                            t.confirmSoftResetTitle(selectedCommit.hash),
-                            t.confirmSoftResetMessage,
-                            () => handleGitReset(selectedCommit.hash, "soft"),
-                            t.confirmSoftResetBtn,
-                            "bg-cyan-600 hover:bg-cyan-500"
-                          );
-                        }}
-                        className="bg-cyan-950/45 border border-cyan-800 hover:bg-cyan-900/50 text-cyan-300 text-xs font-mono px-3.5 py-2 rounded-md transition-colors cursor-pointer"
-                      >
-                        Reset --soft
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          requestConfirm(
-                            t.confirmRevertTitle(selectedCommit.hash),
-                            t.confirmRevertMessage,
-                            () => handleGitRevert(selectedCommit.hash),
-                            t.confirmRevertBtn,
-                            "bg-purple-600 hover:bg-purple-500"
-                          );
-                        }}
-                        className="bg-purple-950/45 border border-purple-800 hover:bg-purple-900/50 text-purple-300 text-xs font-mono px-3.5 py-2 rounded-md transition-colors cursor-pointer"
-                      >
-                        Revert Commit
-                      </button>
                     </div>
                   </div>
 
