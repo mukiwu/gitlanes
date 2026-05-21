@@ -672,7 +672,6 @@ async fn git_ai_explain_diff(state: State<'_, AppState>, file: String, staged: O
 }
 
 pub fn run() {
-    dotenvy::dotenv().ok();
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
