@@ -2242,10 +2242,13 @@ export default function App() {
         </div>
 
         {/* Center/main workspace dashboard columns */}
-        <div className="flex-1 flex flex-col p-4 overflow-hidden gap-4">
-          
-          {/* Top Panel: Git history DAG graph and node analysis */}
-          <div className={isGraphMaximized ? "flex-1 min-h-0" : "h-[43%] min-h-[220px]"}>
+        <div className="flex-1 flex flex-col overflow-hidden">
+
+          {/* Top: Commit graph */}
+          <div
+            style={isGraphMaximized ? undefined : { height: graphHeight }}
+            className={isGraphMaximized ? "flex-1 min-h-0 p-4 pb-2" : "shrink-0 min-h-[180px] p-4 pb-2"}
+          >
             <GitGraph
               commits={commits}
               currentBranch={currentBranch}
@@ -2270,132 +2273,167 @@ export default function App() {
             />
           </div>
 
-          {/* Bottom Panel + CLI 在線圖最大化時整批收起，讓 commit 線圖吃滿高度 */}
+          {/* Resizer A: graph ↔ workspace */}
           {!isGraphMaximized && (
-          <>
-          {/* Bottom Panel: Split screen (Code editor / Diff viewer / Commit Details) */}
-          {isWorkspaceOpen ? (
-          <div className="flex-1 overflow-hidden min-h-[300px]">
-            {diffTarget ? (
-              <DiffViewer
-                file={diffTarget.path}
-                staged={diffTarget.staged}
-                lang={language}
-                onClose={() => setDiffTarget(null)}
-                onNeedAiSetup={() => {
-                  showToast(t.toastSetupAiFirst, true);
-                  setIsAiSettingsOpen(true);
-                }}
-              />
-            ) : selectedCommit ? (
-              /* Selected commit historical inspector panel */
-              <div className="h-full bg-slate-900 border border-slate-800 rounded-lg overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between px-4 py-3 bg-slate-950 border-b border-slate-800">
-                  <div className="flex items-center space-x-2">
-                    <GitCommit className="h-4 w-4 text-cyan-400" />
-                    <span className="text-slate-200 font-semibold text-xs font-mono">{t.commitLabel}: {selectedCommit.hash}</span>
-                  </div>
-                  <button
-                    onClick={() => setSelectedCommit(null)}
-                    className="text-slate-500 hover:text-slate-300 text-xs font-mono font-bold cursor-pointer"
-                  >
-                    {t.closeLog}
-                  </button>
-                </div>
-
-                <div className="flex-1 flex overflow-hidden">
-                  <div className="w-[42%] min-w-[260px] p-5 overflow-auto space-y-4 border-r border-slate-800">
-                  <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
-                    <div>
-                      <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.authorLabel}</span>
-                      <span className="text-slate-350 text-xs font-mono">{selectedCommit.author}</span>
-                    </div>
-                    <div>
-                      <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.dateLabel}</span>
-                      <span className="text-slate-350 text-xs font-mono">{selectedCommit.date}</span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.subjectLabel}</span>
-                      <pre className="text-slate-200 text-xs font-semibold font-mono whitespace-pre-wrap bg-slate-950 p-2 border border-slate-900 rounded mt-1">{selectedCommit.message}</pre>
-                    </div>
-                  </div>
-
-                  {/* Changed files in this commit */}
-                  <div>
-                    <h5 className="text-slate-400 text-xs font-bold font-mono uppercase tracking-wider mb-2">{t.changedFiles} ({commitFiles.length})</h5>
-                    {commitFiles.length === 0 ? (
-                      <span className="text-slate-600 text-[12px] font-mono italic">{t.noChangedFiles}</span>
-                    ) : (
-                      <div className="space-y-1 bg-slate-950/60 p-1.5 rounded-lg border border-slate-850">
-                        {commitFiles.map((file) => (
-                          <button
-                            key={file.path}
-                            onClick={() => setCommitDiffFile(file.path)}
-                            className={`w-full flex items-center space-x-2 text-xs px-2 py-1.5 rounded transition-colors text-left cursor-pointer ${
-                              commitDiffFile === file.path ? "bg-cyan-950/40 border border-cyan-800/60" : "bg-slate-900/30 hover:bg-slate-900/80 hover:border-slate-700 border border-transparent"
-                            }`}
-                          >
-                            <span className="text-[12px] px-1 bg-slate-800 text-slate-300 rounded font-semibold shrink-0 uppercase w-5 text-center">{file.status.charAt(0)}</span>
-                            <span className="font-mono text-[12px] text-slate-300 truncate" title={file.path}>{file.path}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  </div>
-
-                  {/* Right panel: diff of the selected file in this commit */}
-                  <div className="flex-1 min-w-0 overflow-hidden">
-                    {commitDiffFile ? (
-                      <DiffViewer
-                        key={`${selectedCommit.hash}:${commitDiffFile}`}
-                        file={commitDiffFile}
-                        staged={false}
-                        commitHash={selectedCommit.hash}
-                        lang={language}
-                        onClose={() => setCommitDiffFile(null)}
-                        onNeedAiSetup={() => {
-                          showToast(t.toastSetupAiFirst, true);
-                          setIsAiSettingsOpen(true);
-                        }}
-                      />
-                    ) : (
-                      <div className="h-full flex items-center justify-center text-slate-600 text-xs font-mono italic px-6 text-center">
-                        {t.selectFileForDiff}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* Standard code editor panel */
-              <CodeEditor
-                files={sandboxFiles}
-                activeFile={activeFile}
-                onSelectFile={(f) => setActiveFile(f)}
-                onFileUpdated={refreshState}
-                gitFiles={gitFiles}
-                labels={{
-                  workspace: t.workspaceTitle,
-                  emptyFolder: t.emptyFolder,
-                  editorTitle: t.codeEditorTitle,
-                  editorHint: t.codeEditorHint,
-                }}
-                onCollapse={() => setIsWorkspaceOpen(false)}
-                collapseTitle={t.collapseWorkspace}
-              />
-            )}
-          </div>
-          ) : (
-            <button
-              onClick={() => setIsWorkspaceOpen(true)}
-              className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-lg hover:border-slate-700 transition-colors cursor-pointer shrink-0"
-            >
-              <span className="text-slate-400 font-bold text-xs font-mono tracking-wide uppercase">{t.workspaceTitle}</span>
-              <span className="text-slate-500 font-mono text-[12px] font-bold">Expand [ + ]</span>
-            </button>
+            <Resizer
+              orientation="horizontal"
+              onResize={(dy) => setGraphHeight((h) => clamp(h + dy, 180, 2000))}
+              onResizeEnd={persistGraphHeight}
+            />
           )}
-          </>
+
+          {/* Middle: workspace — hidden when graph is maximized */}
+          {!isGraphMaximized && (
+            <div className="flex-1 min-h-[220px] overflow-hidden flex flex-col p-4 pt-2">
+              {/* Bottom Panel: Split screen (Code editor / Diff viewer / Commit Details) */}
+              {isWorkspaceOpen ? (
+              <div className="flex-1 overflow-hidden min-h-[300px]">
+                {diffTarget ? (
+                  <DiffViewer
+                    file={diffTarget.path}
+                    staged={diffTarget.staged}
+                    lang={language}
+                    onClose={() => setDiffTarget(null)}
+                    onNeedAiSetup={() => {
+                      showToast(t.toastSetupAiFirst, true);
+                      setIsAiSettingsOpen(true);
+                    }}
+                  />
+                ) : selectedCommit ? (
+                  /* Selected commit historical inspector panel */
+                  <div className="h-full bg-slate-900 border border-slate-800 rounded-lg overflow-hidden flex flex-col">
+                    <div className="flex items-center justify-between px-4 py-3 bg-slate-950 border-b border-slate-800">
+                      <div className="flex items-center space-x-2">
+                        <GitCommit className="h-4 w-4 text-cyan-400" />
+                        <span className="text-slate-200 font-semibold text-xs font-mono">{t.commitLabel}: {selectedCommit.hash}</span>
+                      </div>
+                      <button
+                        onClick={() => setSelectedCommit(null)}
+                        className="text-slate-500 hover:text-slate-300 text-xs font-mono font-bold cursor-pointer"
+                      >
+                        {t.closeLog}
+                      </button>
+                    </div>
+
+                    <div className="flex-1 flex overflow-hidden">
+                      <div className="w-[42%] min-w-[260px] p-5 overflow-auto space-y-4 border-r border-slate-800">
+                      <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
+                        <div>
+                          <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.authorLabel}</span>
+                          <span className="text-slate-350 text-xs font-mono">{selectedCommit.author}</span>
+                        </div>
+                        <div>
+                          <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.dateLabel}</span>
+                          <span className="text-slate-350 text-xs font-mono">{selectedCommit.date}</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.subjectLabel}</span>
+                          <pre className="text-slate-200 text-xs font-semibold font-mono whitespace-pre-wrap bg-slate-950 p-2 border border-slate-900 rounded mt-1">{selectedCommit.message}</pre>
+                        </div>
+                      </div>
+
+                      {/* Changed files in this commit */}
+                      <div>
+                        <h5 className="text-slate-400 text-xs font-bold font-mono uppercase tracking-wider mb-2">{t.changedFiles} ({commitFiles.length})</h5>
+                        {commitFiles.length === 0 ? (
+                          <span className="text-slate-600 text-[12px] font-mono italic">{t.noChangedFiles}</span>
+                        ) : (
+                          <div className="space-y-1 bg-slate-950/60 p-1.5 rounded-lg border border-slate-850">
+                            {commitFiles.map((file) => (
+                              <button
+                                key={file.path}
+                                onClick={() => setCommitDiffFile(file.path)}
+                                className={`w-full flex items-center space-x-2 text-xs px-2 py-1.5 rounded transition-colors text-left cursor-pointer ${
+                                  commitDiffFile === file.path ? "bg-cyan-950/40 border border-cyan-800/60" : "bg-slate-900/30 hover:bg-slate-900/80 hover:border-slate-700 border border-transparent"
+                                }`}
+                              >
+                                <span className="text-[12px] px-1 bg-slate-800 text-slate-300 rounded font-semibold shrink-0 uppercase w-5 text-center">{file.status.charAt(0)}</span>
+                                <span className="font-mono text-[12px] text-slate-300 truncate" title={file.path}>{file.path}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      </div>
+
+                      {/* Right panel: diff of the selected file in this commit */}
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        {commitDiffFile ? (
+                          <DiffViewer
+                            key={`${selectedCommit.hash}:${commitDiffFile}`}
+                            file={commitDiffFile}
+                            staged={false}
+                            commitHash={selectedCommit.hash}
+                            lang={language}
+                            onClose={() => setCommitDiffFile(null)}
+                            onNeedAiSetup={() => {
+                              showToast(t.toastSetupAiFirst, true);
+                              setIsAiSettingsOpen(true);
+                            }}
+                          />
+                        ) : (
+                          <div className="h-full flex items-center justify-center text-slate-600 text-xs font-mono italic px-6 text-center">
+                            {t.selectFileForDiff}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Standard code editor panel */
+                  <CodeEditor
+                    files={sandboxFiles}
+                    activeFile={activeFile}
+                    onSelectFile={(f) => setActiveFile(f)}
+                    onFileUpdated={refreshState}
+                    gitFiles={gitFiles}
+                    labels={{
+                      workspace: t.workspaceTitle,
+                      emptyFolder: t.emptyFolder,
+                      editorTitle: t.codeEditorTitle,
+                      editorHint: t.codeEditorHint,
+                    }}
+                    onCollapse={() => setIsWorkspaceOpen(false)}
+                    collapseTitle={t.collapseWorkspace}
+                    filesPanelWidth={workspaceFilesWidth}
+                    onFilesPanelResize={(dx) => setWorkspaceFilesWidth((w) => clamp(w + dx, 200, 800))}
+                    onFilesPanelResizeEnd={persistFilesWidth}
+                  />
+                )}
+              </div>
+              ) : (
+                <button
+                  onClick={() => setIsWorkspaceOpen(true)}
+                  className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-lg hover:border-slate-700 transition-colors cursor-pointer shrink-0"
+                >
+                  <span className="text-slate-400 font-bold text-xs font-mono tracking-wide uppercase">{t.workspaceTitle}</span>
+                  <span className="text-slate-500 font-mono text-[12px] font-bold">Expand [ + ]</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Resizer B: workspace ↔ terminal */}
+          {!isGraphMaximized && isTerminalOpen && (
+            <Resizer
+              orientation="horizontal"
+              onResize={(dy) => setTerminalHeight((h) => clamp(h - dy, 160, 2000))}
+              onResizeEnd={persistTerminalHeight}
+            />
+          )}
+
+          {/* Terminal panel — always present so the bar/toggle remains accessible */}
+          {!isGraphMaximized && (
+            <TerminalPanel
+              open={isTerminalOpen}
+              height={terminalHeight}
+              onToggle={toggleTerminal}
+              labels={{
+                title: t.terminal,
+                expand: t.expandTerminal,
+                collapse: t.collapseTerminal,
+              } satisfies TerminalPanelLabels}
+            />
           )}
 
         </div>
