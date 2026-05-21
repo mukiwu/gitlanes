@@ -5,7 +5,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     process::Command,
-    sync::Mutex,
+    sync::{Arc, Mutex},
 };
 use tauri::{Manager, State};
 use ignore::WalkBuilder;
@@ -980,6 +980,41 @@ mod ref_tests {
     }
 }
 
+#[tauri::command]
+async fn terminal_start(
+    app: tauri::AppHandle,
+    state: State<'_, Arc<terminal::SessionManager>>,
+    cwd: String,
+) -> Result<(), String> {
+    if cwd.trim().is_empty() {
+        return Err("cwd is required".to_string());
+    }
+    state.start(app, cwd.trim())
+}
+
+#[tauri::command]
+async fn terminal_write(
+    state: State<'_, Arc<terminal::SessionManager>>,
+    data: String,
+) -> Result<(), String> {
+    state.write(&data)
+}
+
+#[tauri::command]
+async fn terminal_resize(
+    state: State<'_, Arc<terminal::SessionManager>>,
+    cols: u16,
+    rows: u16,
+) -> Result<(), String> {
+    state.resize(cols, rows)
+}
+
+#[tauri::command]
+async fn terminal_kill(state: State<'_, Arc<terminal::SessionManager>>) -> Result<(), String> {
+    state.kill();
+    Ok(())
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -988,6 +1023,18 @@ pub fn run() {
                 repo_path: Mutex::new(None),
                 git_history: Mutex::new(Vec::new()),
             });
+            let session_manager = Arc::new(terminal::SessionManager::new());
+            app.manage(session_manager.clone());
+
+            // Kill any active shell when the main window closes, so we don't leak orphans.
+            if let Some(window) = app.get_webview_window("main") {
+                let sm = session_manager.clone();
+                window.on_window_event(move |event| {
+                    if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
+                        sm.kill();
+                    }
+                });
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -1033,7 +1080,11 @@ pub fn run() {
             ai_settings_provider_state,
             ai_settings_set,
             ai_settings_clear_key,
-            ai_test_connection
+            ai_test_connection,
+            terminal_start,
+            terminal_write,
+            terminal_resize,
+            terminal_kill
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
