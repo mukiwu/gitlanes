@@ -98,6 +98,12 @@ if (isTauriRuntime) {
         return invokeJson("git_reset", { commit: body.commit, mode: body.mode });
       case "/api/git/revert":
         return invokeJson("git_revert", { commit: body.commit });
+      case "/api/git/push":
+        return invokeJson("git_push");
+      case "/api/git/pull":
+        return invokeJson("git_pull");
+      case "/api/git/fetch":
+        return invokeJson("git_fetch");
       case "/api/sandbox/files":
         return invokeJson("sandbox_files");
       case "/api/sandbox/files/write":
