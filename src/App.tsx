@@ -111,6 +111,9 @@ const translations = {
     codeEditorHint: "Select an existing file in the left column or click the + button to write something. Saving updates the file and creates untracked or modified tags.",
     cliHistory: "Git CLI Command History & Output Stream",
     graphTitle: "Interactive Commit History (DAG)",
+    maximizeGraph: "Maximize the commit graph (collapse the panels below)",
+    restoreGraph: "Restore the layout",
+    collapseWorkspace: "Collapse the workspace panel",
     graphEmptyTitle: "No commit logs found",
     graphEmptyHint: "Make changes, stage them in the file explorer, and commit with a message on the sidebar to create the first node in this graph.",
     loadMoreCommits: "Load 300 more commits",
@@ -225,6 +228,9 @@ const translations = {
     codeEditorHint: "在左欄選擇現有檔案，或點 + 按鈕新增內容。儲存後會更新檔案並標記為未追蹤或已修改。",
     cliHistory: "Git CLI 指令記錄與輸出",
     graphTitle: "互動式 Commit 歷史 (DAG)",
+    maximizeGraph: "最大化 commit 線圖（收起下方區塊）",
+    restoreGraph: "還原版面",
+    collapseWorkspace: "收合工作區面板",
     graphEmptyTitle: "找不到 commit 記錄",
     graphEmptyHint: "編輯檔案、在檔案清單中 stage，並在側邊欄輸入訊息送出 commit，即可建立圖譜中的第一個節點。",
     loadMoreCommits: "再載入 300 筆 commit",
@@ -311,6 +317,8 @@ export default function App() {
   // Command logs telemetry
   const [cmdHistory, setCmdHistory] = useState<any[]>([]);
   const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(true);
+  const [isGraphMaximized, setIsGraphMaximized] = useState<boolean>(false);
+  const [isWorkspaceOpen, setIsWorkspaceOpen] = useState<boolean>(true);
 
   // Focus view states
   const [selectedCommit, setSelectedCommit] = useState<CommitNode | null>(null);
@@ -1696,7 +1704,7 @@ export default function App() {
         <div className="flex-1 flex flex-col p-4 overflow-hidden gap-4">
           
           {/* Top Panel: Git history DAG graph and node analysis */}
-          <div className="h-[43%] min-h-[220px]">
+          <div className={isGraphMaximized ? "flex-1 min-h-0" : "h-[43%] min-h-[220px]"}>
             <GitGraph
               commits={commits}
               currentBranch={currentBranch}
@@ -1709,6 +1717,9 @@ export default function App() {
                 emptyHint: t.graphEmptyHint,
                 loadMore: t.loadMoreCommits,
               }}
+              isMaximized={isGraphMaximized}
+              onToggleMaximize={() => setIsGraphMaximized((v) => !v)}
+              maximizeTitle={isGraphMaximized ? t.restoreGraph : t.maximizeGraph}
               onSelectCommit={(commit) => {
                 setSelectedCommit(commit);
                 setDiffTarget(null); // click a commit clears instant diff targets
@@ -1716,7 +1727,11 @@ export default function App() {
             />
           </div>
 
+          {/* Bottom Panel + CLI 在線圖最大化時整批收起，讓 commit 線圖吃滿高度 */}
+          {!isGraphMaximized && (
+          <>
           {/* Bottom Panel: Split screen (Code editor / Diff viewer / Commit Details) */}
+          {isWorkspaceOpen ? (
           <div className="flex-1 overflow-hidden min-h-[300px]">
             {diffTarget ? (
               <DiffViewer
@@ -1853,9 +1868,20 @@ export default function App() {
                   editorTitle: t.codeEditorTitle,
                   editorHint: t.codeEditorHint,
                 }}
+                onCollapse={() => setIsWorkspaceOpen(false)}
+                collapseTitle={t.collapseWorkspace}
               />
             )}
           </div>
+          ) : (
+            <button
+              onClick={() => setIsWorkspaceOpen(true)}
+              className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-lg hover:border-slate-700 transition-colors cursor-pointer shrink-0"
+            >
+              <span className="text-slate-400 font-bold text-xs font-mono tracking-wide uppercase">{t.workspaceTitle}</span>
+              <span className="text-slate-500 font-mono text-[11px] font-bold">Expand [ + ]</span>
+            </button>
+          )}
 
           {/* Live Git Terminal Console & command line telemetry */}
           <div className="bg-slate-950 border border-slate-900 rounded-lg flex flex-col overflow-hidden select-text">
@@ -1921,6 +1947,8 @@ export default function App() {
               </div>
             )}
           </div>
+          </>
+          )}
 
         </div>
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CommitNode } from "../types";
-import { GitBranch, User, Clock, Check } from "lucide-react";
+import { GitBranch, User, Clock, Check, Maximize2, Minimize2 } from "lucide-react";
 
 interface GitGraphLabels {
   title: string;
@@ -17,6 +17,9 @@ interface GitGraphProps {
   hasMore?: boolean;
   onLoadMore?: () => void;
   labels: GitGraphLabels;
+  isMaximized?: boolean;
+  onToggleMaximize?: () => void;
+  maximizeTitle?: string;
 }
 
 export const GitGraph: React.FC<GitGraphProps> = ({
@@ -27,6 +30,9 @@ export const GitGraph: React.FC<GitGraphProps> = ({
   hasMore = false,
   onLoadMore,
   labels,
+  isMaximized = false,
+  onToggleMaximize,
+  maximizeTitle,
 }) => {
   // NOTE: All hooks must run unconditionally and BEFORE any early return,
   // otherwise React throws "Rendered more hooks than during the previous render"
@@ -205,7 +211,18 @@ export const GitGraph: React.FC<GitGraphProps> = ({
           <h3 className="text-slate-200 font-medium text-xs font-sans">{labels.title}</h3>
           <span className="text-[10px] text-slate-600 font-mono">{commits.length}{hasMore ? "+" : ""} commits</span>
         </div>
-        <span className="text-[10px] text-slate-500 font-mono">HEAD: {currentBranch}</span>
+        <div className="flex items-center space-x-3">
+          <span className="text-[10px] text-slate-500 font-mono">HEAD: {currentBranch}</span>
+          {onToggleMaximize && (
+            <button
+              onClick={onToggleMaximize}
+              title={maximizeTitle}
+              className="p-1 rounded text-slate-500 hover:text-slate-200 hover:bg-slate-800/80 transition-colors cursor-pointer"
+            >
+              {isMaximized ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+            </button>
+          )}
+        </div>
       </div>
 
       <div

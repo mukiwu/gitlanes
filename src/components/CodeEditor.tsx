@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Folder, File, Plus, Save, Trash2, FileCode, Check, AlertTriangle } from "lucide-react";
+import { Folder, File, Plus, Save, Trash2, FileCode, Check, AlertTriangle, ChevronDown } from "lucide-react";
 import { GitFile } from "../types";
 
 interface CodeEditorLabels {
@@ -16,6 +16,8 @@ interface CodeEditorProps {
   onFileUpdated: () => void;
   gitFiles?: GitFile[];
   labels: CodeEditorLabels;
+  onCollapse?: () => void;
+  collapseTitle?: string;
 }
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -25,6 +27,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   onFileUpdated,
   gitFiles = [],
   labels,
+  onCollapse,
+  collapseTitle,
 }) => {
   const [content, setContent] = useState<string>("");
   const [newFileName, setNewFileName] = useState<string>("");
@@ -146,13 +150,24 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       <div className="w-[180px] bg-slate-950 border-r border-slate-800 flex flex-col shrink-0 select-none">
         <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800/80">
           <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 font-mono">{labels.workspace}</span>
-          <button
-            onClick={() => setIsCreating(!isCreating)}
-            title="Create New File"
-            className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 transition-colors"
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </button>
+          <div className="flex items-center space-x-0.5">
+            <button
+              onClick={() => setIsCreating(!isCreating)}
+              title="Create New File"
+              className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+            {onCollapse && (
+              <button
+                onClick={onCollapse}
+                title={collapseTitle}
+                className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 transition-colors cursor-pointer"
+              >
+                <ChevronDown className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {isCreating && (
