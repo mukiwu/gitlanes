@@ -115,7 +115,7 @@ mod tests {
     fn anthropic_body_has_max_tokens_and_system() {
         let body = build_anthropic_body("claude-x", "hello", Some("sys"));
         assert_eq!(body["model"], json!("claude-x"));
-        assert_eq!(body["max_tokens"], json!(4096));
+        assert_eq!(body["max_tokens"], json!(ANTHROPIC_MAX_TOKENS));
         assert_eq!(body["system"], json!("sys"));
         assert_eq!(body["messages"][0]["role"], json!("user"));
         assert_eq!(body["messages"][0]["content"], json!("hello"));
