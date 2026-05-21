@@ -230,6 +230,13 @@ const translations = {
     toastBranchMerged: (name: string) => `Branch ${name} merged into current branch.`,
     toastBranchRenamed: (name: string) => `Branch renamed to ${name}.`,
     toastCopiedBranch: "Branch name copied to clipboard.",
+    pull: "Pull",
+    push: "Push",
+    fetch: "Fetch",
+    aheadBehindTip: "Commits ahead / behind the remote",
+    toastPullDone: "Pulled latest changes from remote.",
+    toastPushDone: "Pushed to remote.",
+    toastFetchDone: "Fetched remote updates.",
   },
   zh: {
     appTitle: "GitLanes",
@@ -413,6 +420,13 @@ const translations = {
     toastBranchMerged: (name: string) => `已將分支 ${name} 合併進目前分支。`,
     toastBranchRenamed: (name: string) => `分支已重新命名為 ${name}。`,
     toastCopiedBranch: "已複製分支名稱到剪貼簿。",
+    pull: "Pull",
+    push: "Push",
+    fetch: "Fetch",
+    aheadBehindTip: "領先 / 落後遠端的 commit 數",
+    toastPullDone: "已從遠端拉取最新變更。",
+    toastPushDone: "已推送到遠端。",
+    toastFetchDone: "已抓取遠端更新。",
   },
 };
 
@@ -440,6 +454,8 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isAiSettingsOpen, setIsAiSettingsOpen] = useState<boolean>(false);
   const [currentBranch, setCurrentBranch] = useState<string>("main");
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [aheadBehind, setAheadBehind] = useState<{ hasUpstream: boolean; ahead: number; behind: number }>({ hasUpstream: false, ahead: 0, behind: 0 });
   const [gitFiles, setGitFiles] = useState<GitFile[]>([]);
   const [commits, setCommits] = useState<CommitNode[]>([]);
   const [hasMoreCommits, setHasMoreCommits] = useState<boolean>(false);
@@ -562,6 +578,11 @@ export default function App() {
       if (statusData.initialized) {
         addManagedRepo(statusData.workspacePath || "");
         setCurrentBranch(statusData.currentBranch);
+        setAheadBehind({
+          hasUpstream: !!statusData.hasUpstream,
+          ahead: statusData.ahead ?? 0,
+          behind: statusData.behind ?? 0,
+        });
         setGitFiles(statusData.files);
 
         // 2. Load commits hierarchy
@@ -1268,6 +1289,25 @@ export default function App() {
       showToast(t.toastCopyFailed, true);
     }
   };
+
+  const runSync = async (path: string, okToast: string, failFallback: string) => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch(path, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || failFallback);
+      showToast(okToast);
+      refreshState();
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : failFallback, true);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handlePull = () => runSync("/api/git/pull", t.toastPullDone, "Pull failed");
+  const handlePush = () => runSync("/api/git/push", t.toastPushDone, "Push failed");
+  const handleFetch = () => runSync("/api/git/fetch", t.toastFetchDone, "Fetch failed");
 
   const renderRepoSidebar = () => (
     <aside className={`${isRepoSidebarCollapsed ? "w-12" : "w-[280px]"} h-full bg-slate-950 border-r border-slate-900 shrink-0 transition-all duration-200 flex flex-col`}>
