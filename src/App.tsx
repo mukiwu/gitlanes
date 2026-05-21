@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { 
+import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
   FolderOpen,
-  GitBranch, 
-  GitCommit, 
-  Plus, 
-  RefreshCw, 
-  Check, 
-  X, 
-  AlertTriangle, 
-  File, 
-  Sparkles, 
-  Inbox, 
-  Play, 
+  GitBranch,
+  GitCommit,
+  Plus,
+  RefreshCw,
+  Download,
+  Upload,
+  Check,
+  X,
+  AlertTriangle,
+  File,
+  Sparkles,
+  Inbox,
+  Play,
   HelpCircle,
   GitPullRequest,
   BookOpen,
@@ -1837,6 +1839,12 @@ export default function App() {
           >
             <GitBranch className="h-4 w-4 text-cyan-400 animate-pulse shrink-0" />
             <span className="text-cyan-400 font-mono font-bold text-xs uppercase tracking-wider shrink-0">{currentBranch}</span>
+            {aheadBehind.hasUpstream && (aheadBehind.ahead > 0 || aheadBehind.behind > 0) && (
+              <span className="flex items-center gap-1 text-[12px] font-mono shrink-0" title={t.aheadBehindTip}>
+                {aheadBehind.ahead > 0 && <span className="text-emerald-400">↑{aheadBehind.ahead}</span>}
+                {aheadBehind.behind > 0 && <span className="text-amber-400">↓{aheadBehind.behind}</span>}
+              </span>
+            )}
             <span className="text-slate-500 font-mono text-xs truncate min-w-0">{workspacePath}</span>
             <ChevronDown className={`h-3.5 w-3.5 text-slate-500 shrink-0 transition-transform ${isRepoPanelOpen ? "rotate-180" : ""}`} />
           </button>
@@ -1845,6 +1853,35 @@ export default function App() {
 
         {/* Action controllers: checkout, merge & settings (right-aligned, above the centered selector) */}
         <div className="flex items-center justify-end gap-3 shrink-0 z-20">
+          {/* Pull / Push / Fetch sync buttons */}
+          <button
+            onClick={handlePull}
+            disabled={isSyncing}
+            title={t.pull}
+            className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer disabled:opacity-50 text-[12px] font-mono"
+          >
+            {isSyncing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+            <span>{t.pull}</span>
+          </button>
+          <button
+            onClick={handlePush}
+            disabled={isSyncing}
+            title={t.push}
+            className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer disabled:opacity-50 text-[12px] font-mono"
+          >
+            {isSyncing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+            <span>{t.push}</span>
+          </button>
+          <button
+            onClick={handleFetch}
+            disabled={isSyncing}
+            title={t.fetch}
+            className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer disabled:opacity-50 text-[12px] font-mono"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`} />
+            <span>{t.fetch}</span>
+          </button>
+
           {/* Quick status refresher */}
           <button
             onClick={refreshState}
