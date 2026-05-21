@@ -42,6 +42,10 @@ struct GitStatusResponse {
     #[serde(rename = "workspacePath")]
     workspace_path: Option<String>,
     files: Vec<GitFile>,
+    #[serde(rename = "hasUpstream")]
+    has_upstream: bool,
+    ahead: u32,
+    behind: u32,
 }
 
 #[derive(Debug, Serialize)]
@@ -194,6 +198,9 @@ async fn git_status(state: State<'_, AppState>) -> Result<GitStatusResponse, Str
                 current_branch: "none".to_string(),
                 workspace_path: None,
                 files: vec![],
+                has_upstream: false,
+                ahead: 0,
+                behind: 0,
             });
         }
     };
@@ -203,6 +210,9 @@ async fn git_status(state: State<'_, AppState>) -> Result<GitStatusResponse, Str
             current_branch: "none".to_string(),
             workspace_path: Some(repo_path.to_string_lossy().to_string()),
             files: vec![],
+            has_upstream: false,
+            ahead: 0,
+            behind: 0,
         });
     }
 
@@ -259,11 +269,26 @@ async fn git_status(state: State<'_, AppState>) -> Result<GitStatusResponse, Str
         })
         .collect();
 
+    let (has_upstream, ahead, behind) = {
+        let rl = run_git(&state, &["rev-list", "--count", "--left-right", "@{u}...HEAD"])?;
+        if rl.code == 0 {
+            let mut parts = rl.stdout.split_whitespace();
+            let behind = parts.next().and_then(|s| s.parse().ok()).unwrap_or(0);
+            let ahead = parts.next().and_then(|s| s.parse().ok()).unwrap_or(0);
+            (true, ahead, behind)
+        } else {
+            (false, 0u32, 0u32)
+        }
+    };
+
     Ok(GitStatusResponse {
         initialized: true,
         current_branch,
         workspace_path: Some(repo_path.to_string_lossy().to_string()),
         files,
+        has_upstream,
+        ahead,
+        behind,
     })
 }
 
