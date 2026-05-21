@@ -199,7 +199,7 @@ export const AiSettingsModal: React.FC<AiSettingsModalProps> = ({ open, onClose,
 
         <div className="space-y-4 px-4 py-4">
           <div>
-            <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">{labels.provider}</label>
+            <label className="mb-1.5 block text-[12px] font-bold uppercase tracking-wider text-slate-500">{labels.provider}</label>
             <div className="grid grid-cols-4 gap-1 rounded-lg bg-slate-950 p-1">
               {PROVIDERS.map((p) => (
                 <button
@@ -216,7 +216,7 @@ export const AiSettingsModal: React.FC<AiSettingsModalProps> = ({ open, onClose,
           </div>
 
           <div>
-            <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">{labels.model}</label>
+            <label className="mb-1.5 block text-[12px] font-bold uppercase tracking-wider text-slate-500">{labels.model}</label>
             {provider === "ollama" ? (
               <input
                 type="text"
@@ -252,7 +252,7 @@ export const AiSettingsModal: React.FC<AiSettingsModalProps> = ({ open, onClose,
 
           {provider === "ollama" ? (
             <div>
-              <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">{labels.endpoint}</label>
+              <label className="mb-1.5 block text-[12px] font-bold uppercase tracking-wider text-slate-500">{labels.endpoint}</label>
               <input
                 type="text"
                 value={endpoint}
@@ -263,7 +263,7 @@ export const AiSettingsModal: React.FC<AiSettingsModalProps> = ({ open, onClose,
             </div>
           ) : (
             <div>
-              <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">{labels.apiKey}</label>
+              <label className="mb-1.5 block text-[12px] font-bold uppercase tracking-wider text-slate-500">{labels.apiKey}</label>
               <div className="flex items-center gap-1.5">
                 <input
                   type={showKey ? "text" : "password"}
@@ -275,11 +275,11 @@ export const AiSettingsModal: React.FC<AiSettingsModalProps> = ({ open, onClose,
                 <button onClick={() => setShowKey((v) => !v)} className="rounded border border-slate-800 p-1.5 text-slate-400 hover:text-slate-200">
                   {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 </button>
-                <button onClick={handleClearKey} className="rounded border border-slate-800 px-2 py-1.5 text-[10px] font-mono text-rose-400 hover:text-rose-300">
+                <button onClick={handleClearKey} className="rounded border border-slate-800 px-2 py-1.5 text-[12px] font-mono text-rose-400 hover:text-rose-300">
                   {labels.clear}
                 </button>
               </div>
-              {hasKey && <p className="mt-1 text-[10px] text-slate-500">{labels.keyStoredHint}</p>}
+              {hasKey && <p className="mt-1 text-[12px] text-slate-500">{labels.keyStoredHint}</p>}
             </div>
           )}
 

@@ -149,7 +149,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       {/* File Tree Explorer (VS Code Style left tab) */}
       <div className="w-[180px] bg-slate-950 border-r border-slate-800 flex flex-col shrink-0 select-none">
         <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800/80">
-          <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 font-mono">{labels.workspace}</span>
+          <span className="text-[12px] uppercase tracking-wider font-bold text-slate-500 font-mono">{labels.workspace}</span>
           <div className="flex items-center space-x-0.5">
             <button
               onClick={() => setIsCreating(!isCreating)}
@@ -184,13 +184,13 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
               <button
                 type="button"
                 onClick={() => setIsCreating(false)}
-                className="text-[10px] text-slate-500 hover:text-slate-300 font-mono"
+                className="text-[12px] text-slate-500 hover:text-slate-300 font-mono"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="bg-cyan-600 hover:bg-cyan-500 text-slate-100 text-[10px] px-1.5 py-0.5 rounded font-mono font-medium"
+                className="bg-cyan-600 hover:bg-cyan-500 text-slate-100 text-[12px] px-1.5 py-0.5 rounded font-mono font-medium"
               >
                 Create
               </button>
@@ -241,9 +241,9 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
                       className="flex items-center space-x-2 truncate flex-1 pr-1"
                     >
                       <File className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-cyan-400" : "text-slate-500"}`} />
-                      <span className="truncate font-mono text-[11px]">{file}</span>
+                      <span className="truncate font-mono text-[12px]">{file}</span>
                       {badgeLabel && (
-                        <span className={`text-[9px] px-1 font-bold font-mono rounded border uppercase select-none shrink-0 ${badgeStyle}`} title={gitFile?.displayStatus}>
+                        <span className={`text-[12px] px-1 font-bold font-mono rounded border uppercase select-none shrink-0 ${badgeStyle}`} title={gitFile?.displayStatus}>
                           {badgeLabel}
                         </span>
                       )}
@@ -276,7 +276,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
               <div className="flex items-center space-x-2">
                 <FileCode className="h-4 w-4 text-cyan-500" />
                 <span className="text-slate-200 text-xs font-mono font-semibold">{activeFile}</span>
-                <span className="text-[10px] text-slate-500 font-mono">(Local repository file)</span>
+                <span className="text-[12px] text-slate-500 font-mono">(Local repository file)</span>
               </div>
 
               {/* Action utilities */}
@@ -336,23 +336,23 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
             {/* Educational boilerplate appenders footer */}
             <div className="px-4 py-2 bg-slate-950 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-[10px] text-slate-500 font-bold tracking-wider font-mono uppercase">Interactive Playground Injectors:</span>
+              <span className="text-[12px] text-slate-500 font-bold tracking-wider font-mono uppercase">Interactive Playground Injectors:</span>
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => appendBoilerplate("function")}
-                  className="bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded font-mono text-[10px] px-2 py-1 text-cyan-400 transition-colors"
+                  className="bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded font-mono text-[12px] px-2 py-1 text-cyan-400 transition-colors"
                 >
                   + Add Helper Function
                 </button>
                 <button
                   onClick={() => appendBoilerplate("bug")}
-                  className="bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded font-mono text-[10px] px-2 py-1 text-amber-500 transition-colors"
+                  className="bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded font-mono text-[12px] px-2 py-1 text-amber-500 transition-colors"
                 >
                   + Inject Risk Bug
                 </button>
                 <button
                   onClick={() => appendBoilerplate("comment")}
-                  className="bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded font-mono text-[10px] px-2 py-1 text-slate-400 transition-colors"
+                  className="bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded font-mono text-[12px] px-2 py-1 text-slate-400 transition-colors"
                 >
                   + Append TODO Comment
                 </button>

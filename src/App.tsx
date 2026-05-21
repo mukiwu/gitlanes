@@ -1004,7 +1004,7 @@ export default function App() {
     <aside className={`${isRepoSidebarCollapsed ? "w-12" : "w-[280px]"} h-full bg-slate-950 border-r border-slate-900 shrink-0 transition-all duration-200 flex flex-col`}>
       <div className="h-12 px-3 border-b border-slate-900 flex items-center justify-between">
         {!isRepoSidebarCollapsed && (
-          <span className="text-[11px] font-mono font-bold uppercase text-slate-400 tracking-wider">{t.repositories}</span>
+          <span className="text-[12px] font-mono font-bold uppercase text-slate-400 tracking-wider">{t.repositories}</span>
         )}
         <button
           onClick={() => setIsRepoSidebarCollapsed(!isRepoSidebarCollapsed)}
@@ -1019,7 +1019,7 @@ export default function App() {
         <>
           <div className="p-2 flex-1 overflow-y-auto">
             {managedRepos.length === 0 ? (
-              <div className="p-3 text-[11px] font-mono text-slate-600 text-center">{t.noRepositories}</div>
+              <div className="p-3 text-[12px] font-mono text-slate-600 text-center">{t.noRepositories}</div>
             ) : (
               <div className="space-y-1">
                 {managedRepos.map((repo) => {
@@ -1036,9 +1036,9 @@ export default function App() {
                     >
                       <div className="min-w-0 flex-1 text-left" title={repo.path}>
                         <span className="block text-xs font-semibold text-slate-200 truncate">{repo.name}</span>
-                        <span className="block text-[10px] font-mono text-slate-600 truncate">{repo.path}</span>
+                        <span className="block text-[12px] font-mono text-slate-600 truncate">{repo.path}</span>
                       </div>
-                      {isActive && <span className="text-[9px] text-cyan-400 font-mono uppercase">{t.active}</span>}
+                      {isActive && <span className="text-[12px] text-cyan-400 font-mono uppercase">{t.active}</span>}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1060,25 +1060,25 @@ export default function App() {
             <form onSubmit={handleSaveIdentity} className="p-3 border-t border-slate-900 bg-slate-950/80">
               <div className="flex items-center gap-2 mb-2">
                 <User className="h-3.5 w-3.5 text-slate-500" />
-                <span className="text-[10px] font-mono font-bold uppercase text-slate-500">{t.gitIdentity}</span>
+                <span className="text-[12px] font-mono font-bold uppercase text-slate-500">{t.gitIdentity}</span>
               </div>
               <div className="space-y-2">
                 <input
                   value={gitUserName}
                   onChange={(e) => setGitUserName(e.target.value)}
                   placeholder={t.userName}
-                  className="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded font-mono text-[11px] px-2 py-1.5 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded font-mono text-[12px] px-2 py-1.5 focus:outline-none focus:border-cyan-500"
                 />
                 <input
                   value={gitUserEmail}
                   onChange={(e) => setGitUserEmail(e.target.value)}
                   placeholder={t.userEmail}
-                  className="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded font-mono text-[11px] px-2 py-1.5 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-slate-900 text-slate-200 border border-slate-800 rounded font-mono text-[12px] px-2 py-1.5 focus:outline-none focus:border-cyan-500"
                 />
                 <button
                   type="submit"
                   disabled={isActionLoading}
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-mono font-bold py-1.5 rounded border border-slate-700"
+                  className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-[12px] font-mono font-bold py-1.5 rounded border border-slate-700"
                 >
                   {t.saveIdentity}
                 </button>
@@ -1098,9 +1098,9 @@ export default function App() {
       <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 w-[460px] max-w-[80vw] max-h-[75vh] overflow-y-auto bg-slate-900 border border-slate-800 rounded-lg shadow-2xl scrollbar-thin">
         {/* Repository switcher */}
         <div className="p-2 border-b border-slate-800">
-          <div className="px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">{t.repositories}</div>
+          <div className="px-2 py-1 text-[12px] font-mono font-bold uppercase tracking-wider text-slate-500">{t.repositories}</div>
           {managedRepos.length === 0 ? (
-            <div className="p-3 text-[11px] font-mono text-slate-600 text-center">{t.noRepositories}</div>
+            <div className="p-3 text-[12px] font-mono text-slate-600 text-center">{t.noRepositories}</div>
           ) : (
             <div className="space-y-1">
               {managedRepos.map((repo) => {
@@ -1120,9 +1120,9 @@ export default function App() {
                   >
                     <div className="min-w-0 flex-1" title={repo.path}>
                       <span className="block text-xs font-semibold text-slate-200 truncate">{repo.name}</span>
-                      <span className="block text-[10px] font-mono text-slate-600 truncate">{repo.path}</span>
+                      <span className="block text-[12px] font-mono text-slate-600 truncate">{repo.path}</span>
                     </div>
-                    {isActive && <span className="text-[9px] text-cyan-400 font-mono uppercase shrink-0">{t.active}</span>}
+                    {isActive && <span className="text-[12px] text-cyan-400 font-mono uppercase shrink-0">{t.active}</span>}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1142,10 +1142,10 @@ export default function App() {
 
         {/* Open / Clone / Init */}
         <div className="p-3 space-y-3 border-b border-slate-800">
-          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">{t.openNew}</div>
+          <div className="text-[12px] font-mono font-bold uppercase tracking-wider text-slate-500">{t.openNew}</div>
 
           <form onSubmit={handleOpenRepo} className="space-y-1.5">
-            <label className="block text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider">{t.openLocalFolder}</label>
+            <label className="block text-[12px] font-mono text-slate-400 font-bold uppercase tracking-wider">{t.openLocalFolder}</label>
             <div className="flex space-x-2">
               <input
                 type="text"
@@ -1173,7 +1173,7 @@ export default function App() {
           </form>
 
           <form onSubmit={handleCloneRepo} className="space-y-1.5">
-            <label className="block text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider">{t.cloneRepo}</label>
+            <label className="block text-[12px] font-mono text-slate-400 font-bold uppercase tracking-wider">{t.cloneRepo}</label>
             <input
               type="text"
               placeholder="https://github.com/user/repository.git"
@@ -1201,7 +1201,7 @@ export default function App() {
           </form>
 
           <form onSubmit={handleInitRepo} className="space-y-1.5">
-            <label className="block text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider">{t.initFolder}</label>
+            <label className="block text-[12px] font-mono text-slate-400 font-bold uppercase tracking-wider">{t.initFolder}</label>
             <div className="flex space-x-2">
               <input
                 type="text"
@@ -1225,24 +1225,24 @@ export default function App() {
         <form onSubmit={handleSaveIdentity} className="p-3">
           <div className="flex items-center gap-2 mb-2">
             <User className="h-3.5 w-3.5 text-slate-500" />
-            <span className="text-[10px] font-mono font-bold uppercase text-slate-500">{t.gitIdentity}</span>
+            <span className="text-[12px] font-mono font-bold uppercase text-slate-500">{t.gitIdentity}</span>
           </div>
           <div className="flex items-center gap-2">
             <input
               value={gitUserName}
               onChange={(e) => setGitUserName(e.target.value)}
               placeholder={t.userName}
-              className="flex-1 min-w-0 bg-slate-950 text-slate-200 border border-slate-800 rounded font-mono text-[11px] px-2 py-1.5 focus:outline-none focus:border-cyan-500"
+              className="flex-1 min-w-0 bg-slate-950 text-slate-200 border border-slate-800 rounded font-mono text-[12px] px-2 py-1.5 focus:outline-none focus:border-cyan-500"
             />
             <input
               value={gitUserEmail}
               onChange={(e) => setGitUserEmail(e.target.value)}
               placeholder={t.userEmail}
-              className="flex-1 min-w-0 bg-slate-950 text-slate-200 border border-slate-800 rounded font-mono text-[11px] px-2 py-1.5 focus:outline-none focus:border-cyan-500"
+              className="flex-1 min-w-0 bg-slate-950 text-slate-200 border border-slate-800 rounded font-mono text-[12px] px-2 py-1.5 focus:outline-none focus:border-cyan-500"
             />
             <button
               type="submit"
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-mono px-3 py-1.5 rounded border border-slate-700 cursor-pointer shrink-0"
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[12px] font-mono px-3 py-1.5 rounded border border-slate-700 cursor-pointer shrink-0"
             >
               {t.saveIdentity}
             </button>
@@ -1262,7 +1262,7 @@ export default function App() {
           </div>
           <button
             onClick={() => setLanguage(language === "en" ? "zh" : "en")}
-            className="flex items-center gap-1.5 text-[10px] text-slate-400 hover:text-slate-100 font-mono border border-slate-800 px-2 py-1 rounded"
+            className="flex items-center gap-1.5 text-[12px] text-slate-400 hover:text-slate-100 font-mono border border-slate-800 px-2 py-1 rounded"
           >
             <Languages className="h-3.5 w-3.5" />
             <span>{language === "en" ? "中文" : "EN"}</span>
@@ -1291,7 +1291,7 @@ export default function App() {
             </div>
 
             <form onSubmit={handleOpenRepo} className="space-y-3 mb-5">
-              <label className="block text-[11px] font-mono text-slate-400 font-bold uppercase tracking-wider">{t.openLocalFolder}</label>
+              <label className="block text-[12px] font-mono text-slate-400 font-bold uppercase tracking-wider">{t.openLocalFolder}</label>
               <div className="flex space-x-2">
                 <input
                   type="text"
@@ -1322,11 +1322,11 @@ export default function App() {
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-slate-800" />
               </div>
-              <span className="relative px-3 bg-slate-900 text-slate-500 font-mono text-[9px] uppercase tracking-wider">{t.orClone}</span>
+              <span className="relative px-3 bg-slate-900 text-slate-500 font-mono text-[12px] uppercase tracking-wider">{t.orClone}</span>
             </div>
 
             <form onSubmit={handleCloneRepo} className="space-y-3">
-              <label className="block text-[11px] font-mono text-slate-400 font-bold uppercase tracking-wider">{t.cloneRepo}</label>
+              <label className="block text-[12px] font-mono text-slate-400 font-bold uppercase tracking-wider">{t.cloneRepo}</label>
               <div className="grid gap-2">
                 <input
                   type="text"
@@ -1357,7 +1357,7 @@ export default function App() {
                   )}
                 </button>
               </div>
-              <span className="block text-[10px] text-slate-500 font-mono italic">
+              <span className="block text-[12px] text-slate-500 font-mono italic">
                 {t.targetMustBeEmpty}
               </span>
             </form>
@@ -1366,11 +1366,11 @@ export default function App() {
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-slate-800" />
               </div>
-              <span className="relative px-3 bg-slate-900 text-slate-500 font-mono text-[9px] uppercase tracking-wider">{t.orInit}</span>
+              <span className="relative px-3 bg-slate-900 text-slate-500 font-mono text-[12px] uppercase tracking-wider">{t.orInit}</span>
             </div>
 
             <form onSubmit={handleInitRepo} className="space-y-3">
-              <label className="block text-[11px] font-mono text-slate-400 font-bold uppercase tracking-wider">{t.initFolder}</label>
+              <label className="block text-[12px] font-mono text-slate-400 font-bold uppercase tracking-wider">{t.initFolder}</label>
               <div className="flex space-x-2">
                 <input
                   type="text"
@@ -1392,7 +1392,7 @@ export default function App() {
         </main>
         </div>
 
-        <footer className="py-4 text-center border-t border-slate-900 bg-slate-950 text-[11px] text-slate-600 font-mono">
+        <footer className="py-4 text-center border-t border-slate-900 bg-slate-950 text-[12px] text-slate-600 font-mono">
           Powered by Tauri, local Git, and AI
         </footer>
       </div>
@@ -1454,7 +1454,7 @@ export default function App() {
 
           {/* Checkout Selector */}
           <div className="flex items-center space-x-1.5 bg-slate-950 px-2 py-1 rounded border border-slate-800 shrink-0">
-            <span className="text-[10px] text-slate-500 font-mono font-bold uppercase whitespace-nowrap">{t.checkout}</span>
+            <span className="text-[12px] text-slate-500 font-mono font-bold uppercase whitespace-nowrap">{t.checkout}</span>
             <select
               value={currentBranch}
               onChange={(e) => handleCheckoutBranch(e.target.value)}
@@ -1485,7 +1485,7 @@ export default function App() {
               <button
                 type="submit"
                 disabled={!mergeTargetBranch}
-                className="bg-purple-950 hover:bg-purple-900 border border-purple-800 text-purple-400 text-[10px] font-mono leading-none px-2.5 py-1.5 rounded transition-all cursor-pointer"
+                className="bg-purple-950 hover:bg-purple-900 border border-purple-800 text-purple-400 text-[12px] font-mono leading-none px-2.5 py-1.5 rounded transition-all cursor-pointer"
               >
                 {t.merge}
               </button>
@@ -1505,7 +1505,7 @@ export default function App() {
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
                 <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-slate-800 rounded-lg shadow-xl z-50 p-1.5">
-                  <div className="px-2 pt-1 pb-2 text-[10px] text-slate-500 font-mono font-bold uppercase tracking-wider">{t.settings}</div>
+                  <div className="px-2 pt-1 pb-2 text-[12px] text-slate-500 font-mono font-bold uppercase tracking-wider">{t.settings}</div>
 
                   {/* Language */}
                   <div className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-slate-800/60">
@@ -1515,7 +1515,7 @@ export default function App() {
                     </span>
                     <button
                       onClick={() => setLanguage(language === "en" ? "zh" : "en")}
-                      className="text-[10px] text-slate-300 hover:text-slate-100 font-mono border border-slate-700 px-2 py-0.5 rounded bg-slate-950"
+                      className="text-[12px] text-slate-300 hover:text-slate-100 font-mono border border-slate-700 px-2 py-0.5 rounded bg-slate-950"
                     >
                       {language === "en" ? "中文" : "EN"}
                     </button>
@@ -1589,19 +1589,19 @@ export default function App() {
           {/* 2. Staging and Working tree modification tracking */}
           <div className="mb-5 flex-1 flex flex-col min-h-[220px]">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] uppercase font-bold tracking-wider font-mono text-slate-500">{t.indexStageControl}</span>
+              <span className="text-[12px] uppercase font-bold tracking-wider font-mono text-slate-500">{t.indexStageControl}</span>
               <div className="flex space-x-2">
                 {gitFiles.length > 0 && (
                   <>
                     <button
                       onClick={handleStageAll}
-                      className="text-[10px] text-emerald-400 font-mono hover:underline"
+                      className="text-[12px] text-emerald-400 font-mono hover:underline"
                     >
                       {t.stageAll}
                     </button>
                     <button
                       onClick={handleUnstageAll}
-                      className="text-[10px] text-amber-500 font-mono hover:underline"
+                      className="text-[12px] text-amber-500 font-mono hover:underline"
                     >
                       {t.unstageAll}
                     </button>
@@ -1613,8 +1613,8 @@ export default function App() {
             {gitFiles.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-slate-900/10 border border-dashed border-slate-800 rounded-lg">
                 <Check className="h-8 w-8 text-slate-700 mb-2" />
-                <p className="text-slate-500 text-[11px] font-mono">{t.workingClean}</p>
-                <p className="text-slate-600 text-[10px] max-w-[200px] mt-1">
+                <p className="text-slate-500 text-[12px] font-mono">{t.workingClean}</p>
+                <p className="text-slate-600 text-[12px] max-w-[200px] mt-1">
                   {t.editFilesHint}
                 </p>
               </div>
@@ -1623,15 +1623,15 @@ export default function App() {
                 {/* Unstaged / Working Tree block */}
                 {modifiedFiles.length > 0 && (
                   <div>
-                    <span className="text-[10px] text-amber-400 font-mono font-bold block mb-1">{t.unstagedChanges} ({modifiedFiles.length})</span>
+                    <span className="text-[12px] text-amber-400 font-mono font-bold block mb-1">{t.unstagedChanges} ({modifiedFiles.length})</span>
                     <div className="space-y-1 bg-slate-950/60 p-1.5 rounded-lg border border-slate-850">
                       {modifiedFiles.map((file) => (
                         <div key={file.path} className="flex items-center justify-between text-xs px-2 py-1.5 rounded bg-slate-900/30 hover:bg-slate-900/80 transition-colors">
                           <div className="flex items-center space-x-2 truncate pr-2">
-                            <span className="text-[9px] px-1 bg-amber-950 text-amber-400 rounded font-semibold shrink-0 uppercase">
+                            <span className="text-[12px] px-1 bg-amber-950 text-amber-400 rounded font-semibold shrink-0 uppercase">
                               {file.displayStatus === "Untracked" ? "U" : "M"}
                             </span>
-                            <span className="font-mono text-[11px] text-slate-300 truncate" title={file.path}>{file.path}</span>
+                            <span className="font-mono text-[12px] text-slate-300 truncate" title={file.path}>{file.path}</span>
                           </div>
 
                           <div className="flex items-center space-x-1.5 shrink-0">
@@ -1644,7 +1644,7 @@ export default function App() {
                             </button>
                             <button
                               onClick={() => handleStageFile(file.path)}
-                              className="text-[10px] text-emerald-400 bg-emerald-950/20 border border-emerald-900 px-1.5 py-0.5 rounded hover:bg-emerald-900/40 transition-colors cursor-pointer font-mono"
+                              className="text-[12px] text-emerald-400 bg-emerald-950/20 border border-emerald-900 px-1.5 py-0.5 rounded hover:bg-emerald-900/40 transition-colors cursor-pointer font-mono"
                             >
                               Stage
                             </button>
@@ -1658,13 +1658,13 @@ export default function App() {
                 {/* Staged Changes block */}
                 {stagedFiles.length > 0 && (
                   <div>
-                    <span className="text-[10px] text-emerald-400 font-mono font-bold block mb-1">{t.stagedChanges} ({stagedFiles.length})</span>
+                    <span className="text-[12px] text-emerald-400 font-mono font-bold block mb-1">{t.stagedChanges} ({stagedFiles.length})</span>
                     <div className="space-y-1 bg-slate-950/60 p-1.5 rounded-lg border border-slate-850">
                       {stagedFiles.map((file) => (
                         <div key={file.path} className="flex items-center justify-between text-xs px-2 py-1.5 rounded bg-slate-900/30 hover:bg-slate-900/80 transition-colors">
                           <div className="flex items-center space-x-2 truncate pr-2">
-                            <span className="text-[9px] px-1 bg-emerald-950 text-emerald-400 rounded font-semibold shrink-0 uppercase">staged</span>
-                            <span className="font-mono text-[11px] text-slate-300 truncate" title={file.path}>{file.path}</span>
+                            <span className="text-[12px] px-1 bg-emerald-950 text-emerald-400 rounded font-semibold shrink-0 uppercase">staged</span>
+                            <span className="font-mono text-[12px] text-slate-300 truncate" title={file.path}>{file.path}</span>
                           </div>
 
                           <div className="flex items-center space-x-1.5 shrink-0">
@@ -1677,7 +1677,7 @@ export default function App() {
                             </button>
                             <button
                               onClick={() => handleUnstageFile(file.path)}
-                              className="text-[10px] text-amber-400 bg-amber-950/20 border border-amber-900 px-1.5 py-0.5 rounded hover:bg-amber-950/40 transition-colors cursor-pointer font-mono"
+                              className="text-[12px] text-amber-400 bg-amber-950/20 border border-amber-900 px-1.5 py-0.5 rounded hover:bg-amber-950/40 transition-colors cursor-pointer font-mono"
                             >
                               Reset
                             </button>
@@ -1694,11 +1694,11 @@ export default function App() {
           {/* 3. Stashes dashboard */}
           <div className="mb-5 border-t border-slate-900 pt-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] uppercase font-bold tracking-wider font-mono text-slate-500">{t.gitStashes} ({stashes.length})</span>
+              <span className="text-[12px] uppercase font-bold tracking-wider font-mono text-slate-500">{t.gitStashes} ({stashes.length})</span>
               {stashes.length > 0 && (
                 <button
                   onClick={handlePopStash}
-                  className="text-[10px] text-teal-400 hover:underline font-mono"
+                  className="text-[12px] text-teal-400 hover:underline font-mono"
                 >
                   {t.popStash}
                 </button>
@@ -1711,18 +1711,18 @@ export default function App() {
                 placeholder={t.stashPlaceholder}
                 value={stashMessage}
                 onChange={(e) => setStashMessage(e.target.value)}
-                className="flex-1 bg-slate-950 text-slate-200 border border-slate-800 rounded font-mono text-[10px] px-2 py-1 focus:outline-none focus:border-cyan-500"
+                className="flex-1 bg-slate-950 text-slate-200 border border-slate-800 rounded font-mono text-[12px] px-2 py-1 focus:outline-none focus:border-cyan-500"
               />
               <button
                 type="submit"
-                className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] px-2 py-1 rounded font-mono"
+                className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-[12px] px-2 py-1 rounded font-mono"
               >
                 {t.stash}
               </button>
             </form>
 
             {stashes.length > 0 && (
-              <div className="space-y-1 bg-slate-950/40 p-2 rounded-lg border border-slate-800 font-mono text-[10px] max-h-[80px] overflow-y-auto">
+              <div className="space-y-1 bg-slate-950/40 p-2 rounded-lg border border-slate-800 font-mono text-[12px] max-h-[80px] overflow-y-auto">
                 {stashes.map((s, index) => (
                   <div key={index} className="text-slate-400 truncate">
                     {s.line}
@@ -1735,12 +1735,12 @@ export default function App() {
           {/* 4. Commitment Controller panel */}
           <div className="border-t border-slate-900 pt-4 mt-auto select-none">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] uppercase font-bold tracking-wider font-mono text-slate-500">{t.commitment}</span>
+              <span className="text-[12px] uppercase font-bold tracking-wider font-mono text-slate-500">{t.commitment}</span>
               <button
                 type="button"
                 onClick={handleAiSuggestedCommitMessage}
                 disabled={isAiLoading}
-                className="flex items-center space-x-1 text-amber-400 hover:text-amber-300 font-mono text-[11px] tracking-wide"
+                className="flex items-center space-x-1 text-amber-400 hover:text-amber-300 font-mono text-[12px] tracking-wide"
               >
                 {isAiLoading ? (
                   <RefreshCw className="h-3 w-3 animate-spin" />
@@ -1837,15 +1837,15 @@ export default function App() {
                   <div className="w-[42%] min-w-[260px] p-5 overflow-auto space-y-4 border-r border-slate-800">
                   <div className="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
                     <div>
-                      <span className="text-[10px] text-slate-500 block font-mono font-bold uppercase">{t.authorLabel}</span>
+                      <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.authorLabel}</span>
                       <span className="text-slate-350 text-xs font-mono">{selectedCommit.author}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-500 block font-mono font-bold uppercase">{t.dateLabel}</span>
+                      <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.dateLabel}</span>
                       <span className="text-slate-350 text-xs font-mono">{selectedCommit.date}</span>
                     </div>
                     <div className="col-span-2">
-                      <span className="text-[10px] text-slate-500 block font-mono font-bold uppercase">{t.subjectLabel}</span>
+                      <span className="text-[12px] text-slate-500 block font-mono font-bold uppercase">{t.subjectLabel}</span>
                       <pre className="text-slate-200 text-xs font-semibold font-mono whitespace-pre-wrap bg-slate-950 p-2 border border-slate-900 rounded mt-1">{selectedCommit.message}</pre>
                     </div>
                   </div>
@@ -1936,7 +1936,7 @@ export default function App() {
                   <div>
                     <h5 className="text-slate-400 text-xs font-bold font-mono uppercase tracking-wider mb-2">{t.changedFiles} ({commitFiles.length})</h5>
                     {commitFiles.length === 0 ? (
-                      <span className="text-slate-600 text-[11px] font-mono italic">{t.noChangedFiles}</span>
+                      <span className="text-slate-600 text-[12px] font-mono italic">{t.noChangedFiles}</span>
                     ) : (
                       <div className="space-y-1 bg-slate-950/60 p-1.5 rounded-lg border border-slate-850">
                         {commitFiles.map((file) => (
@@ -1947,8 +1947,8 @@ export default function App() {
                               commitDiffFile === file.path ? "bg-cyan-950/40 border border-cyan-800/60" : "bg-slate-900/30 hover:bg-slate-900/80 hover:border-slate-700 border border-transparent"
                             }`}
                           >
-                            <span className="text-[9px] px-1 bg-slate-800 text-slate-300 rounded font-semibold shrink-0 uppercase w-5 text-center">{file.status.charAt(0)}</span>
-                            <span className="font-mono text-[11px] text-slate-300 truncate" title={file.path}>{file.path}</span>
+                            <span className="text-[12px] px-1 bg-slate-800 text-slate-300 rounded font-semibold shrink-0 uppercase w-5 text-center">{file.status.charAt(0)}</span>
+                            <span className="font-mono text-[12px] text-slate-300 truncate" title={file.path}>{file.path}</span>
                           </button>
                         ))}
                       </div>
@@ -2003,7 +2003,7 @@ export default function App() {
               className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-lg hover:border-slate-700 transition-colors cursor-pointer shrink-0"
             >
               <span className="text-slate-400 font-bold text-xs font-mono tracking-wide uppercase">{t.workspaceTitle}</span>
-              <span className="text-slate-500 font-mono text-[11px] font-bold">Expand [ + ]</span>
+              <span className="text-slate-500 font-mono text-[12px] font-bold">Expand [ + ]</span>
             </button>
           )}
           </>
@@ -2013,7 +2013,7 @@ export default function App() {
 
       </div>
 
-      <footer className="px-6 py-3 bg-slate-950 border-t border-slate-900 flex items-center justify-between text-[11px] text-slate-600 font-mono shrink-0">
+      <footer className="px-6 py-3 bg-slate-950 border-t border-slate-900 flex items-center justify-between text-[12px] text-slate-600 font-mono shrink-0">
         <div className="flex items-center space-x-2">
           <span>{t.simulationActive}</span>
           <span className="inline-block h-1.5 w-1.5 bg-emerald-500 rounded-full animate-ping" />

@@ -92,7 +92,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         <div className="flex items-center space-x-2">
           <FileText className="h-4 w-4 text-cyan-400" />
           <h3 className="text-slate-200 font-medium text-xs font-mono">
-            Diff Viewer: {file} {staged ? <span className="text-emerald-400 uppercase text-[10px] bg-emerald-950/80 px-1 py-0.5 rounded border border-emerald-900 ml-2">STAGED</span> : <span className="text-amber-400 uppercase text-[10px] bg-amber-950/80 px-1 py-0.5 rounded border border-amber-900 ml-2">UNSTAGED</span>}
+            Diff Viewer: {file} {staged ? <span className="text-emerald-400 uppercase text-[12px] bg-emerald-950/80 px-1 py-0.5 rounded border border-emerald-900 ml-2">STAGED</span> : <span className="text-amber-400 uppercase text-[12px] bg-amber-950/80 px-1 py-0.5 rounded border border-amber-900 ml-2">UNSTAGED</span>}
           </h3>
         </div>
         {onClose && (
@@ -107,7 +107,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Colorized Diff column */}
-        <div className="flex-1 overflow-auto bg-slate-950/80 p-3 font-mono text-[11px] leading-5 select-text border-r border-slate-800">
+        <div className="flex-1 overflow-auto bg-slate-950/80 p-3 font-mono text-[12px] leading-5 select-text border-r border-slate-800">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center p-12 text-slate-500">
               <Loader2 className="h-6 w-6 animate-spin text-cyan-500 mb-2" />
@@ -159,7 +159,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             {!explanation && !isExplaining && (
               <button
                 onClick={handleExplain}
-                className="bg-amber-600 hover:bg-amber-500 text-slate-100 text-[10px] font-semibold px-2 py-1 rounded transition-colors font-mono cursor-pointer"
+                className="bg-amber-600 hover:bg-amber-500 text-slate-100 text-[12px] font-semibold px-2 py-1 rounded transition-colors font-mono cursor-pointer"
               >
                 Explain Diffs
               </button>
@@ -178,17 +178,17 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
               <div className="flex flex-col items-center justify-center py-12 text-slate-400 text-center">
                 <Loader2 className="h-7 w-7 animate-spin text-amber-500 mb-3" />
                 <p className="text-xs font-medium">AI is analyzing the diffs...</p>
-                <p className="text-[10px] text-slate-500 max-w-[200px] mt-1.5">
+                <p className="text-[12px] text-slate-500 max-w-[200px] mt-1.5">
                   Translating instructions and computing delta patterns.
                 </p>
               </div>
             ) : explanation ? (
               <div className="text-xs text-slate-300 leading-relaxed font-sans space-y-3 prose prose-invert select-text">
-                <div className="bg-slate-950/40 p-3 border border-slate-800 rounded text-slate-200 font-mono text-[10px] mb-2 flex items-center justify-between">
+                <div className="bg-slate-950/40 p-3 border border-slate-800 rounded text-slate-200 font-mono text-[12px] mb-2 flex items-center justify-between">
                   <span>Explanation complete!</span>
                   <button
                     onClick={handleExplain}
-                    className="text-amber-500 hover:text-amber-400 text-[9px] underline font-sans"
+                    className="text-amber-500 hover:text-amber-400 text-[12px] underline font-sans"
                   >
                     Recalculate
                   </button>
@@ -212,7 +212,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
               <div className="flex flex-col items-center justify-center py-16 text-center text-slate-500">
                 <HelpCircle className="h-10 w-10 text-slate-700 mb-2" />
                 <h5 className="text-slate-400 text-xs font-medium">Ask AI for Advice</h5>
-                <p className="text-[10px] text-slate-500 max-w-[200px] mt-1">
+                <p className="text-[12px] text-slate-500 max-w-[200px] mt-1">
                   Click 'Explain Diffs' to activate AI models explaining the changes, and what bugs to watch out for!
                 </p>
               </div>

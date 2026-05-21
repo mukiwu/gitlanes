@@ -51,12 +51,3 @@ body,
   --color-emerald-600: #3f7a61;
   --color-emerald-500: #4d9375;
 }
-
-/* Enforce a 12px minimum for tiny text utilities across all languages, so
-   small labels stay readable and EN/ZH render at identical sizes. */
-.text-\[9px\],
-.text-\[10px\],
-.text-\[11px\] {
-  font-size: 12px !important;
-}
-

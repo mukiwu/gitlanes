@@ -209,10 +209,10 @@ export const GitGraph: React.FC<GitGraphProps> = ({
         <div className="flex items-center space-x-2">
           <GitBranch className="h-4 w-4 text-cyan-500" />
           <h3 className="text-slate-200 font-medium text-xs font-sans">{labels.title}</h3>
-          <span className="text-[10px] text-slate-600 font-mono">{commits.length}{hasMore ? "+" : ""} commits</span>
+          <span className="text-[12px] text-slate-600 font-mono">{commits.length}{hasMore ? "+" : ""} commits</span>
         </div>
         <div className="flex items-center space-x-3">
-          <span className="text-[10px] text-slate-500 font-mono">HEAD: {currentBranch}</span>
+          <span className="text-[12px] text-slate-500 font-mono">HEAD: {currentBranch}</span>
           {onToggleMaximize && (
             <button
               onClick={onToggleMaximize}
@@ -309,7 +309,7 @@ export const GitGraph: React.FC<GitGraphProps> = ({
 
                     {/* Head tag indicator */}
                     {isHead && (
-                      <span className="flex items-center space-x-0.5 bg-emerald-950 border border-emerald-800 text-emerald-400 text-[10px] px-1.5 py-0.5 rounded font-medium select-none shrink-0 uppercase">
+                      <span className="flex items-center space-x-0.5 bg-emerald-950 border border-emerald-800 text-emerald-400 text-[12px] px-1.5 py-0.5 rounded font-medium select-none shrink-0 uppercase">
                         <Check className="h-2.5 w-2.5" />
                         <span>HEAD</span>
                       </span>
@@ -322,7 +322,7 @@ export const GitGraph: React.FC<GitGraphProps> = ({
                   </div>
 
                   {/* Date & Author right column */}
-                  <div className="flex items-center space-x-4 text-[10px] text-slate-500 shrink-0 font-mono">
+                  <div className="flex items-center space-x-4 text-[12px] text-slate-500 shrink-0 font-mono">
                     <div className="flex items-center space-x-1">
                       <User className="h-3 w-3" />
                       <span className="max-w-[70px] truncate">{commit.author}</span>
@@ -342,7 +342,7 @@ export const GitGraph: React.FC<GitGraphProps> = ({
               >
                 <button
                   onClick={onLoadMore}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-mono font-bold px-3 py-1.5 rounded border border-slate-700 cursor-pointer"
+                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[12px] font-mono font-bold px-3 py-1.5 rounded border border-slate-700 cursor-pointer"
                 >
                   {labels.loadMore}
                 </button>
