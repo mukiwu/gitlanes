@@ -58,7 +58,7 @@ export const GitGraph: React.FC<GitGraphProps> = ({
 
   // Assign lanes to commits to draw clean side-by-side branch tracks
   // Simple, deterministic track assignment based on parent links
-  const laneWidth = 24;
+  const laneWidth = 12;
   const nodeRadius = 6;
   const rowHeight = 44;
   const paddingLeft = 16;
@@ -295,7 +295,7 @@ export const GitGraph: React.FC<GitGraphProps> = ({
                     height: `${rowHeight}px`,
                     top: `${layout.y - rowHeight / 2}px`,
                   }}
-                  className={`absolute left-[160px] right-4 flex items-center justify-between px-3 py-1 rounded cursor-pointer transition-all border
+                  className={`absolute left-[100px] right-4 flex items-center justify-between px-3 py-1 rounded cursor-pointer transition-all border
                     ${isSelected 
                       ? "bg-slate-800/80 border-slate-700 text-slate-100 shadow-sm" 
                       : "border-transparent hover:bg-slate-800/30 text-slate-400 hover:text-slate-300"
@@ -337,7 +337,7 @@ export const GitGraph: React.FC<GitGraphProps> = ({
             })}
             {hasMore && (
               <div
-                className="absolute left-[160px] right-4 flex items-center justify-center"
+                className="absolute left-[100px] right-4 flex items-center justify-center"
                 style={{ top: `${svgHeight - 34}px`, height: "32px" }}
               >
                 <button
