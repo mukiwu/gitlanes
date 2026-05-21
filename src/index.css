@@ -11,45 +11,45 @@ body,
 }
 
 @theme {
-  /* Vitesse Dark backgrounds */
-  --color-slate-950: #121212;
-  --color-slate-900: #151515;
-  --color-slate-850: #1c1c1c;
-  --color-slate-800: #222222;
-  --color-slate-700: #333333;
-  --color-slate-650: #3e3e3e;
-  --color-slate-600: #484848;
-  --color-slate-500: #6a737d;
-  --color-slate-400: #889999;
-  --color-slate-350: #b8c2c2;
-  --color-slate-300: #ccd5d5;
-  --color-slate-200: #dbdfdf;
-  --color-slate-100: #fcfcfc;
+  /* Vitesse Dark Soft backgrounds — editor base #222, soft layered tones */
+  --color-slate-950: #1b1b1b;
+  --color-slate-900: #222222;
+  --color-slate-850: #262626;
+  --color-slate-800: #2a2a2a;
+  --color-slate-700: #363636;
+  --color-slate-650: #414141;
+  --color-slate-600: #4b4b4b;
+  --color-slate-500: #6b6b6b;
+  --color-slate-400: #85827b;
+  --color-slate-350: #9d9a8e;
+  --color-slate-300: #b3b0a3;
+  --color-slate-200: #c9c5b8;
+  --color-slate-100: #dbd7ca;
 
-  /* Vitesse Dark accent colors */
-  --color-cyan-700: #2d6b4f;
-  --color-cyan-600: #31825c;
-  --color-cyan-500: #41b883;
-  --color-cyan-400: #4fc48a;
+  /* Vitesse Dark Soft cyan/teal (branch references) */
+  --color-cyan-700: #3a6f78;
+  --color-cyan-600: #4a8e9a;
+  --color-cyan-500: #5eaab5;
+  --color-cyan-400: #6fb8c2;
 
-  /* Violet / Purple (Cloning/Git references) */
-  --color-purple-700: #885bb3;
-  --color-purple-600: #9e6ec9;
-  --color-purple-500: #b88edb;
+  /* Vitesse Dark Soft magenta (Cloning/Git references) */
+  --color-purple-700: #a85578;
+  --color-purple-600: #c06890;
+  --color-purple-500: #d9739f;
 
-  /* Amber / Orange (Modified files/Warnings) */
-  --color-amber-600: #c97e3a;
-  --color-amber-500: #db9d52;
-  --color-amber-400: #e5b567;
+  /* Vitesse Dark Soft yellow (Modified files/Warnings) */
+  --color-amber-600: #c9a94f;
+  --color-amber-500: #dbbd63;
+  --color-amber-400: #e6cc77;
 
-  /* Rose / Red (Deleted/Wipe actions) */
-  --color-rose-650: #bd4545;
-  --color-rose-600: #c45a5a;
-  --color-rose-500: #db7b7b;
+  /* Vitesse Dark Soft red (Deleted/Wipe actions) */
+  --color-rose-650: #b85f5f;
+  --color-rose-600: #c06b6b;
+  --color-rose-500: #cb7676;
 
-  /* Emerald / Green (Staged changes) */
-  --color-emerald-600: #2c8558;
-  --color-emerald-500: #3eaf7c;
+  /* Vitesse Dark Soft green (Staged changes / primary) */
+  --color-emerald-600: #3f7a61;
+  --color-emerald-500: #4d9375;
 }
 
 .lang-zh {

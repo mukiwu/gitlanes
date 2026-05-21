@@ -69,6 +69,8 @@ const translations = {
     userEmail: "user.email",
     saveIdentity: "Save Identity",
     closeRepo: "Close Repository",
+    settings: "Settings",
+    settingsLanguage: "Language",
     closeRepoTitle: "Close Repository?",
     closeRepoMessage: "This closes the current repository in the app. It will not delete local files or Git history.",
     refresh: "Refresh repository changes",
@@ -181,6 +183,8 @@ const translations = {
     userEmail: "user.email",
     saveIdentity: "儲存身分",
     closeRepo: "關閉儲存庫",
+    settings: "設定",
+    settingsLanguage: "介面語言",
     closeRepoTitle: "關閉儲存庫？",
     closeRepoMessage: "這只會在 App 中關閉目前儲存庫，不會刪除本地檔案或 Git 歷史記錄。",
     refresh: "重新整理儲存庫狀態",
@@ -292,6 +296,7 @@ export default function App() {
   const [managedRepos, setManagedRepos] = useState<ManagedRepo[]>(readStoredRepos);
   const [isRepoSidebarCollapsed, setIsRepoSidebarCollapsed] = useState<boolean>(false);
   const [isRepoPanelOpen, setIsRepoPanelOpen] = useState<boolean>(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [currentBranch, setCurrentBranch] = useState<string>("main");
   const [gitFiles, setGitFiles] = useState<GitFile[]>([]);
   const [commits, setCommits] = useState<CommitNode[]>([]);
@@ -1349,32 +1354,24 @@ export default function App() {
       )}
 
       {/* Main workspace nav bar */}
-      <nav id="workspace-nav" className="px-6 py-3.5 bg-slate-900 border-b border-slate-800 flex items-center shrink-0 gap-4">
-        <div className="flex-1 min-w-0" />
-        <div className="relative flex items-center min-w-0 shrink">
+      <nav id="workspace-nav" className="relative px-6 py-3.5 bg-slate-900 border-b border-slate-800 flex items-center justify-end shrink-0 gap-3">
+        {/* Branch / repo selector — absolutely centered so it stays mid-header as the window widens */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center min-w-0 max-w-[40%] z-10">
           <button
             onClick={() => setIsRepoPanelOpen((v) => !v)}
             title={t.switchRepo}
-            className="flex items-center space-x-2 bg-slate-950 border border-slate-800 hover:border-slate-600 px-3 py-1.5 rounded-md cursor-pointer transition-colors min-w-0"
+            className="flex items-center space-x-2 bg-slate-950 border border-slate-800 hover:border-slate-600 px-3 py-1.5 rounded-md cursor-pointer transition-colors min-w-0 max-w-full"
           >
             <GitBranch className="h-4 w-4 text-cyan-400 animate-pulse shrink-0" />
             <span className="text-cyan-400 font-mono font-bold text-xs uppercase tracking-wider shrink-0">{currentBranch}</span>
-            <span className="text-slate-500 font-mono text-xs truncate max-w-[420px]">{workspacePath}</span>
+            <span className="text-slate-500 font-mono text-xs truncate min-w-0">{workspacePath}</span>
             <ChevronDown className={`h-3.5 w-3.5 text-slate-500 shrink-0 transition-transform ${isRepoPanelOpen ? "rotate-180" : ""}`} />
           </button>
           {isRepoPanelOpen && renderRepoPanel()}
         </div>
 
-        {/* Action controllers: Branches, checkout & merges */}
-        <div className="flex-1 min-w-0 flex items-center justify-end space-x-3 flex-wrap">
-          <button
-            onClick={() => setLanguage(language === "en" ? "zh" : "en")}
-            className="flex items-center gap-1.5 text-[10px] text-slate-400 hover:text-slate-100 font-mono border border-slate-800 px-2 py-1 rounded bg-slate-950"
-          >
-            <Languages className="h-3.5 w-3.5" />
-            <span>{language === "en" ? "中文" : "EN"}</span>
-          </button>
-
+        {/* Action controllers: checkout, merge & settings (right-aligned, above the centered selector) */}
+        <div className="flex items-center justify-end gap-3 shrink-0 z-20">
           {/* Quick status refresher */}
           <button
             onClick={refreshState}
@@ -1385,12 +1382,12 @@ export default function App() {
           </button>
 
           {/* Checkout Selector */}
-          <div className="flex items-center space-x-1.5 bg-slate-950 px-2 py-1 rounded border border-slate-800">
-            <span className="text-[10px] text-slate-500 font-mono font-bold uppercase">{t.checkout}</span>
+          <div className="flex items-center space-x-1.5 bg-slate-950 px-2 py-1 rounded border border-slate-800 shrink-0">
+            <span className="text-[10px] text-slate-500 font-mono font-bold uppercase whitespace-nowrap">{t.checkout}</span>
             <select
               value={currentBranch}
               onChange={(e) => handleCheckoutBranch(e.target.value)}
-              className="bg-transparent text-slate-200 border-none outline-none font-mono text-xs cursor-pointer focus:ring-0 py-0"
+              className="bg-transparent text-slate-200 border-none outline-none font-mono text-xs cursor-pointer focus:ring-0 py-0 max-w-[150px] truncate"
             >
               {branches.map(b => (
                 <option key={b.name} value={b.name} className="bg-slate-900 text-slate-200">
@@ -1424,21 +1421,58 @@ export default function App() {
             </form>
           )}
 
-          {/* Re-init / Wipe simulation repo */}
-          <button
-            onClick={() => {
-              requestConfirm(
-                t.closeRepoTitle,
-                t.closeRepoMessage,
-                handleWipeRepo,
-                t.closeRepo,
-                "bg-slate-700 hover:bg-slate-600"
-              );
-            }}
-            className="text-[10px] text-rose-400 hover:text-rose-300 font-mono hover:underline pl-2 border-l border-slate-800 cursor-pointer"
-          >
-            {t.closeRepo}
-          </button>
+          {/* Settings dropdown: language switch + close repository */}
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setIsSettingsOpen((v) => !v)}
+              title={t.settings}
+              className="p-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer"
+            >
+              <Settings className="h-3.5 w-3.5" />
+            </button>
+            {isSettingsOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-slate-800 rounded-lg shadow-xl z-50 p-1.5">
+                  <div className="px-2 pt-1 pb-2 text-[10px] text-slate-500 font-mono font-bold uppercase tracking-wider">{t.settings}</div>
+
+                  {/* Language */}
+                  <div className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-slate-800/60">
+                    <span className="flex items-center gap-1.5 text-xs text-slate-300 font-mono">
+                      <Languages className="h-3.5 w-3.5 text-slate-400" />
+                      {t.settingsLanguage}
+                    </span>
+                    <button
+                      onClick={() => setLanguage(language === "en" ? "zh" : "en")}
+                      className="text-[10px] text-slate-300 hover:text-slate-100 font-mono border border-slate-700 px-2 py-0.5 rounded bg-slate-950"
+                    >
+                      {language === "en" ? "中文" : "EN"}
+                    </button>
+                  </div>
+
+                  <div className="my-1 border-t border-slate-800" />
+
+                  {/* Close repository */}
+                  <button
+                    onClick={() => {
+                      setIsSettingsOpen(false);
+                      requestConfirm(
+                        t.closeRepoTitle,
+                        t.closeRepoMessage,
+                        handleWipeRepo,
+                        t.closeRepo,
+                        "bg-slate-700 hover:bg-slate-600"
+                      );
+                    }}
+                    className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 rounded font-mono cursor-pointer"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    {t.closeRepo}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </nav>
 
