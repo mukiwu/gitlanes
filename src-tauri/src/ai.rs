@@ -102,7 +102,10 @@ pub async fn ai_generate(
     prompt: &str,
     system: Option<&str>,
 ) -> Result<String, String> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|err| sanitize_error(&err.to_string(), api_key))?;
 
     let request = match provider {
         AiProvider::Gemini => {

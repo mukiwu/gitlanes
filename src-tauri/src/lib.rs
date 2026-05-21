@@ -689,6 +689,9 @@ async fn ai_settings_set(
     api_key: Option<String>,
     endpoint: Option<String>,
 ) -> Result<serde_json::Value, String> {
+    if model.trim().is_empty() {
+        return Err("model must not be empty".to_string());
+    }
     let provider = ai::AiProvider::from_str(&provider)?;
     ai_settings::save(provider, &model, api_key.as_deref(), endpoint.as_deref())?;
     Ok(json!({ "success": true }))
