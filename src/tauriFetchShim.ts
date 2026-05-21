@@ -90,6 +90,8 @@ if (isTauriRuntime) {
         return invokeJson("git_tag_delete", { name: body.name });
       case "/api/git/branch/delete":
         return invokeJson("git_branch_delete", { name: body.name, force: body.force });
+      case "/api/git/branch/rename":
+        return invokeJson("git_branch_rename", { oldName: body.oldName, newName: body.newName });
       case "/api/git/history":
         return invokeJson("git_history");
       case "/api/git/reset":
