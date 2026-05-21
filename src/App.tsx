@@ -38,6 +38,7 @@ import { CommitContextMenu, CommitContextMenuItem } from "./components/CommitCon
 import { CommitInputModal } from "./components/CommitInputModal";
 import { Resizer } from "./components/Resizer";
 import { TerminalPanel, TerminalPanelLabels } from "./components/TerminalPanel";
+import { XTermView } from "./components/XTermView";
 
 type Language = "en" | "zh";
 
@@ -244,6 +245,8 @@ const translations = {
     terminal: "Terminal",
     expandTerminal: "Expand terminal",
     collapseTerminal: "Collapse terminal",
+    terminalExited: "(process exited — collapse and expand to restart)",
+    terminalNoRepo: "Open a repository to start the terminal.",
   },
   zh: {
     appTitle: "GitLanes",
@@ -436,6 +439,8 @@ const translations = {
     terminal: "終端機",
     expandTerminal: "展開終端機",
     collapseTerminal: "收合終端機",
+    terminalExited: "(shell 已結束 — 收合再展開可重新啟動)",
+    terminalNoRepo: "請先開啟 repository。",
   },
 };
 
@@ -2447,7 +2452,21 @@ export default function App() {
                 expand: t.expandTerminal,
                 collapse: t.collapseTerminal,
               } satisfies TerminalPanelLabels}
-            />
+            >
+              {workspacePath ? (
+                <XTermView
+                  key={workspacePath}
+                  cwd={workspacePath}
+                  exitedLabel={t.terminalExited}
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <span className="text-[12px] font-mono text-slate-600 italic px-4 text-center">
+                    {t.terminalNoRepo}
+                  </span>
+                </div>
+              )}
+            </TerminalPanel>
           )}
 
         </div>

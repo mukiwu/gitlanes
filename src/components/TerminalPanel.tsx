@@ -12,9 +12,10 @@ interface TerminalPanelProps {
   height: number;
   onToggle: () => void;
   labels: TerminalPanelLabels;
+  children?: React.ReactNode;
 }
 
-export const TerminalPanel: React.FC<TerminalPanelProps> = ({ open, height, onToggle, labels }) => {
+export const TerminalPanel: React.FC<TerminalPanelProps> = ({ open, height, onToggle, labels, children }) => {
   return (
     <div className="flex flex-col shrink-0 border-t border-slate-800">
       {/* Title bar (always shown, 32px tall) */}
@@ -34,11 +35,9 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({ open, height, onTo
       {open && (
         <div
           style={{ height }}
-          className="bg-slate-950 border-t border-slate-800/60 overflow-hidden flex items-center justify-center"
+          className="bg-slate-950 border-t border-slate-800/60 overflow-hidden"
         >
-          <span className="text-[12px] font-mono text-slate-600 italic px-4 text-center">
-            Terminal will live here (PTY integration in next spec)
-          </span>
+          {children}
         </div>
       )}
     </div>
