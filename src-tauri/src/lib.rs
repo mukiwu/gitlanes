@@ -394,34 +394,26 @@ fn parse_refs(decoration: &str) -> Vec<GitRef> {
                 return None;
             }
             if let Some(rest) = token.strip_prefix("HEAD -> ") {
-                return Some(GitRef { name: rest.trim().to_string(), kind: "head".to_string() });
+                let name = rest.trim().strip_prefix("refs/heads/").unwrap_or(rest.trim());
+                return Some(GitRef { name: name.to_string(), kind: "head".to_string() });
             }
             if token == "HEAD" {
                 return Some(GitRef { name: "HEAD".to_string(), kind: "head".to_string() });
             }
             if let Some(rest) = token.strip_prefix("tag: ") {
-                return Some(GitRef { name: rest.trim().to_string(), kind: "tag".to_string() });
+                let name = rest.trim().strip_prefix("refs/tags/").unwrap_or(rest.trim());
+                return Some(GitRef { name: name.to_string(), kind: "tag".to_string() });
             }
-            // Heuristic: local branch namespaces use slash (feature/, fix/, chore/, etc.)
-            // Remote tracking refs use a remote name prefix (origin/, upstream/, etc.)
-            // With --decorate=short we can't know remote names, so we classify as remote
-            // only when the prefix before '/' looks like a simple remote name (no nested slashes
-            // and not a well-known branch namespace prefix).
-            const BRANCH_NAMESPACES: &[&str] = &[
-                "feature", "fix", "bugfix", "hotfix", "release", "chore",
-                "refactor", "docs", "test", "ci", "perf", "revert",
-            ];
-            let kind = if let Some(slash_pos) = token.find('/') {
-                let prefix = &token[..slash_pos];
-                if BRANCH_NAMESPACES.contains(&prefix) {
-                    "branch"
-                } else {
-                    "remote"
-                }
-            } else {
-                "branch"
-            };
-            Some(GitRef { name: token.to_string(), kind: kind.to_string() })
+            if let Some(rest) = token.strip_prefix("refs/heads/") {
+                return Some(GitRef { name: rest.to_string(), kind: "branch".to_string() });
+            }
+            if let Some(rest) = token.strip_prefix("refs/remotes/") {
+                return Some(GitRef { name: rest.to_string(), kind: "remote".to_string() });
+            }
+            if let Some(rest) = token.strip_prefix("refs/tags/") {
+                return Some(GitRef { name: rest.to_string(), kind: "tag".to_string() });
+            }
+            Some(GitRef { name: token.to_string(), kind: "branch".to_string() })
         })
         .collect()
 }
@@ -442,7 +434,7 @@ async fn git_log(state: State<'_, AppState>, limit: Option<usize>, skip: Option<
     let mut args = vec![
         "log",
         "--topo-order",
-        "--decorate=short",
+        "--decorate=full",
         "--pretty=format:%h|%p|%an|%ad|%d|%s",
         "--date=format-local:%Y-%m-%d %H:%M",
         max_count.as_str(),
@@ -816,7 +808,7 @@ mod ref_tests {
 
     #[test]
     fn parses_head_branch_tag_remote() {
-        let refs = parse_refs(" (HEAD -> main, tag: v1.0, origin/main, feature/x)");
+        let refs = parse_refs(" (HEAD -> refs/heads/main, tag: refs/tags/v1.0, refs/remotes/origin/main, refs/heads/feature/x)");
         assert_eq!(refs.len(), 4);
         assert_eq!(refs[0].name, "main");
         assert_eq!(refs[0].kind, "head");
