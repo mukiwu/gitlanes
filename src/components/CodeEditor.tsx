@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Folder, File, Plus, Save, Trash2, FileCode, Check, AlertTriangle, ChevronDown } from "lucide-react";
 import { GitFile } from "../types";
+import { Resizer } from "./Resizer";
 
 interface CodeEditorLabels {
   workspace: string;
@@ -18,6 +19,9 @@ interface CodeEditorProps {
   labels: CodeEditorLabels;
   onCollapse?: () => void;
   collapseTitle?: string;
+  filesPanelWidth?: number;
+  onFilesPanelResize?: (deltaPx: number) => void;
+  onFilesPanelResizeEnd?: () => void;
 }
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -29,6 +33,9 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   labels,
   onCollapse,
   collapseTitle,
+  filesPanelWidth,
+  onFilesPanelResize,
+  onFilesPanelResizeEnd,
 }) => {
   const [content, setContent] = useState<string>("");
   const [newFileName, setNewFileName] = useState<string>("");
@@ -147,7 +154,10 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   return (
     <div id="code-editor-component" className="flex h-full bg-slate-900 border border-slate-800 rounded-lg overflow-hidden font-sans">
       {/* File Tree Explorer (VS Code Style left tab) */}
-      <div className="w-[180px] bg-slate-950 border-r border-slate-800 flex flex-col shrink-0 select-none">
+      <div
+        style={{ width: filesPanelWidth ?? 180 }}
+        className="bg-slate-950 flex flex-col shrink-0 select-none min-w-[200px]"
+      >
         <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800/80">
           <span className="text-[12px] uppercase tracking-wider font-bold text-slate-500 font-mono">{labels.workspace}</span>
           <div className="flex items-center space-x-0.5">
@@ -266,6 +276,10 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           )}
         </div>
       </div>
+
+      {onFilesPanelResize && (
+        <Resizer orientation="vertical" onResize={onFilesPanelResize} onResizeEnd={onFilesPanelResizeEnd} />
+      )}
 
       {/* Code Text editor space */}
       <div className="flex-1 flex flex-col bg-slate-900 relative">
