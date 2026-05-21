@@ -25,3 +25,7 @@ pnpm-debug.log*
 .DS_Store
 .idea/
 .vscode/
+
+# Tauri updater signing private key (NEVER commit)
+*.key
+updater-key*.json

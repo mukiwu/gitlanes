@@ -23,6 +23,16 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDgzNDUwRjg2QUM4OTMxRDIKUldUU01ZbXNoZzlGZzFoZE1Uc3hNN3o3TVJFcHVCQ3FCZUdrTGpBYkxZRGVleWRwR2FKcWpSZWwK",
+      "endpoints": [
+        "https://github.com/mukiwu/gitlanes/releases/latest/download/latest.json"
+      ],
+      "dialog": false
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",
