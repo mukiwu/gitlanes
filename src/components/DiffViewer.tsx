@@ -19,9 +19,9 @@ const explanationCache = new Map<string, string>();
 
 // Compact dark-theme styling for the AI explanation markdown.
 const markdownComponents: Components = {
-  h1: ({ children }) => <h1 className="text-sm font-bold text-slate-100 mt-3 mb-1.5">{children}</h1>,
-  h2: ({ children }) => <h2 className="text-[13px] font-bold text-slate-100 mt-3 mb-1.5">{children}</h2>,
-  h3: ({ children }) => <h3 className="text-[12px] font-bold text-slate-200 mt-2.5 mb-1">{children}</h3>,
+  h1: ({ children }) => <h1 className="text-[17px] font-bold text-slate-100 mt-3 mb-1.5">{children}</h1>,
+  h2: ({ children }) => <h2 className="text-[15px] font-bold text-slate-100 mt-3 mb-1.5">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-[14px] font-bold text-slate-200 mt-2.5 mb-1">{children}</h3>,
   p: ({ children }) => <p className="my-1.5 leading-relaxed">{children}</p>,
   ul: ({ children }) => <ul className="list-disc pl-4 my-1.5 space-y-0.5">{children}</ul>,
   ol: ({ children }) => <ol className="list-decimal pl-4 my-1.5 space-y-0.5">{children}</ol>,
@@ -29,8 +29,8 @@ const markdownComponents: Components = {
   strong: ({ children }) => <strong className="font-bold text-slate-100">{children}</strong>,
   em: ({ children }) => <em className="italic text-slate-200">{children}</em>,
   a: ({ children, href }) => <a href={href} className="text-cyan-400 underline" target="_blank" rel="noreferrer">{children}</a>,
-  code: ({ children }) => <code className="bg-slate-950 border border-slate-800 rounded px-1 py-0.5 font-mono text-[11px] text-amber-300">{children}</code>,
-  pre: ({ children }) => <pre className="bg-slate-950 border border-slate-800 rounded p-2 my-2 overflow-x-auto text-[11px] font-mono whitespace-pre-wrap">{children}</pre>,
+  code: ({ children }) => <code className="bg-slate-950 border border-slate-800 rounded px-1 py-0.5 font-mono text-[13px] text-amber-300">{children}</code>,
+  pre: ({ children }) => <pre className="bg-slate-950 border border-slate-800 rounded p-2 my-2 overflow-x-auto text-[13px] font-mono whitespace-pre-wrap">{children}</pre>,
   blockquote: ({ children }) => <blockquote className="border-l-2 border-amber-500/40 pl-3 my-1.5 text-slate-400">{children}</blockquote>,
   hr: () => <hr className="border-slate-800 my-3" />,
 };
@@ -217,7 +217,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                 </p>
               </div>
             ) : explanation ? (
-              <div className="text-xs text-slate-300 leading-relaxed font-sans space-y-3 prose prose-invert select-text">
+              <div className="text-[14px] text-slate-300 leading-relaxed font-sans space-y-3 prose prose-invert select-text">
                 <div className="bg-slate-950/40 p-3 border border-slate-800 rounded text-slate-200 font-mono text-[12px] mb-2 flex items-center justify-between">
                   <span>Explanation complete!</span>
                   <button
