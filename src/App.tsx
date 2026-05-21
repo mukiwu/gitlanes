@@ -8,6 +8,7 @@ import {
   GitCommit,
   Plus,
   RefreshCw,
+  DownloadCloud,
   Download,
   Upload,
   Check,
@@ -1878,7 +1879,7 @@ export default function App() {
             title={t.fetch}
             className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer disabled:opacity-50 text-[12px] font-mono"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`} />
+            {isSyncing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <DownloadCloud className="h-3.5 w-3.5" />}
             <span>{t.fetch}</span>
           </button>
 
