@@ -6,6 +6,7 @@ interface DiffViewerProps {
   staged: boolean;
   commitHash?: string;
   onClose?: () => void;
+  onNeedAiSetup?: () => void;
 }
 
 export const DiffViewer: React.FC<DiffViewerProps> = ({
@@ -13,6 +14,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   staged,
   commitHash,
   onClose,
+  onNeedAiSetup,
 }) => {
   const [diffText, setDiffText] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -48,6 +50,19 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   }, [file, staged, commitHash]);
 
   const handleExplain = async () => {
+    try {
+      const settingsRes = await fetch("/api/ai/settings");
+      if (!settingsRes.ok) throw new Error("settings unavailable");
+      const settings = await settingsRes.json();
+      if (!settings.hasKey) {
+        onNeedAiSetup?.();
+        return;
+      }
+    } catch {
+      onNeedAiSetup?.();
+      return;
+    }
+
     setIsExplaining(true);
     setErrorMess(null);
     try {
@@ -56,16 +71,12 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ file, staged, commit: commitHash }),
       });
-      if (!res.ok) {
-        throw new Error("Could not fetch AI explanation");
-      }
       const data = await res.json();
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      if (!res.ok) throw new Error(data.error || "Could not fetch AI explanation");
+      if (data.error) throw new Error(data.error);
       setExplanation(data.explanation);
     } catch (err: any) {
-      setErrorMess(err.message || "Failed to contact Gemini model.");
+      setErrorMess(err.message || "Failed to contact AI provider.");
     } finally {
       setIsExplaining(false);
     }
