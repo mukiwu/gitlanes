@@ -49,9 +49,20 @@ const base64ToBytes = (b64: string): Uint8Array => {
 
 export const XTermView: React.FC<XTermViewProps> = ({ cwd, exitedLabel }) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
+  // Keep the latest label in a ref so changing it (e.g. language toggle)
+  // doesn't re-run the effect and tear down the live shell.
+  const exitedLabelRef = useRef(exitedLabel);
+  useEffect(() => {
+    exitedLabelRef.current = exitedLabel;
+  }, [exitedLabel]);
 
   useEffect(() => {
     if (!hostRef.current) return;
+    // Guard against ghost `terminal:exit` events from the previous session.
+    // When key={workspacePath} changes, the new effect's listener is registered
+    // BEFORE the old session's reader thread has emitted its final exit event,
+    // so without this flag we'd show "(process exited)" on a freshly-started shell.
+    let sessionStarted = false;
 
     const term = new Terminal({
       theme: THEME,
@@ -78,12 +89,14 @@ export const XTermView: React.FC<XTermViewProps> = ({ cwd, exitedLabel }) => {
       term.write(base64ToBytes(e.payload));
     });
     const unlistenExitP = listen("terminal:exit", () => {
-      term.writeln(`\r\n\x1b[2;90m${exitedLabel}\x1b[0m`);
+      if (!sessionStarted) return;
+      term.writeln(`\r\n\x1b[2;90m${exitedLabelRef.current}\x1b[0m`);
     });
 
     // Start the shell, then fit to container and report initial size.
     invoke("terminal_start", { cwd })
       .then(() => {
+        sessionStarted = true;
         try {
           fit.fit();
           invoke("terminal_resize", { cols: term.cols, rows: term.rows }).catch(() => {});
@@ -114,7 +127,7 @@ export const XTermView: React.FC<XTermViewProps> = ({ cwd, exitedLabel }) => {
       invoke("terminal_kill").catch(() => {});
       term.dispose();
     };
-  }, [cwd, exitedLabel]);
+  }, [cwd]);
 
   return <div ref={hostRef} className="h-full w-full bg-slate-950" />;
 };

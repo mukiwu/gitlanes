@@ -87,8 +87,13 @@ impl SessionManager {
     }
 
     pub fn kill(&self) {
-        let mut guard = self.inner.lock().expect("session mutex poisoned");
-        if let Some(mut sess) = guard.take() {
+        // Release the mutex before the blocking `wait()` so concurrent commands
+        // (write/resize on the Tokio runtime) don't stall behind a slow-dying child.
+        let sess = {
+            let mut guard = self.inner.lock().expect("session mutex poisoned");
+            guard.take()
+        };
+        if let Some(mut sess) = sess {
             let _ = sess.child.kill();
             let _ = sess.child.wait();
         }
