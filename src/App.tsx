@@ -1828,9 +1828,12 @@ export default function App() {
       )}
 
       {/* Main workspace nav bar */}
-      <nav id="workspace-nav" className="relative px-6 py-3.5 bg-slate-900 border-b border-slate-800 flex items-center justify-end shrink-0 gap-3">
-        {/* Branch / repo selector — absolutely centered so it stays mid-header as the window widens */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center min-w-0 max-w-[40%] z-10">
+      <nav id="workspace-nav" className="px-6 py-3.5 bg-slate-900 border-b border-slate-800 grid grid-cols-[1fr_auto_1fr] items-center shrink-0 gap-3">
+        {/* Left grid cell: empty spacer; collapses to 0 when narrow so the center can shift left. */}
+        <div className="min-w-0" />
+
+        {/* Branch / repo selector — centered grid cell; truncates instead of overlapping when narrow. */}
+        <div className="relative flex items-center min-w-0 z-10">
           <button
             onClick={() => setIsRepoPanelOpen((v) => !v)}
             title={t.switchRepo}
@@ -1850,14 +1853,14 @@ export default function App() {
           {isRepoPanelOpen && renderRepoPanel()}
         </div>
 
-        {/* Action controllers: checkout, merge & settings (right-aligned, above the centered selector) */}
-        <div className="flex items-center justify-end gap-3 shrink-0 z-20">
+        {/* Action controllers: right grid cell (sync, checkout, merge & settings). */}
+        <div className="flex items-center justify-end gap-3 min-w-0 z-20">
           {/* Pull / Push / Fetch sync buttons */}
           <button
             onClick={handlePull}
             disabled={isSyncing}
             title={t.pull}
-            className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer disabled:opacity-50 text-[12px] font-mono"
+            className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer disabled:opacity-50 text-[12px] font-mono shrink-0"
           >
             {isSyncing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
             <span>{t.pull}</span>
@@ -1866,7 +1869,7 @@ export default function App() {
             onClick={handlePush}
             disabled={isSyncing}
             title={t.push}
-            className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer disabled:opacity-50 text-[12px] font-mono"
+            className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer disabled:opacity-50 text-[12px] font-mono shrink-0"
           >
             {isSyncing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
             <span>{t.push}</span>
@@ -1875,7 +1878,7 @@ export default function App() {
             onClick={handleFetch}
             disabled={isSyncing}
             title={t.fetch}
-            className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer disabled:opacity-50 text-[12px] font-mono"
+            className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer disabled:opacity-50 text-[12px] font-mono shrink-0"
           >
             {isSyncing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <DownloadCloud className="h-3.5 w-3.5" />}
             <span>{t.fetch}</span>
@@ -1899,7 +1902,7 @@ export default function App() {
 
           {/* Merge Trigger */}
           {branches.length > 1 && (
-            <form onSubmit={handleMergeBranch} className="flex items-center space-x-1 border border-slate-800 p-0.5 rounded bg-slate-950">
+            <form onSubmit={handleMergeBranch} className="flex items-center space-x-1 border border-slate-800 p-0.5 rounded bg-slate-950 shrink-0">
               <select
                 value={mergeTargetBranch}
                 onChange={(e) => setMergeTargetBranch(e.target.value)}
