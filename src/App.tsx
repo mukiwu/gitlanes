@@ -36,6 +36,8 @@ import { DiffViewer } from "./components/DiffViewer";
 import { AiSettingsModal, AiSettingsLabels } from "./components/AiSettingsModal";
 import { CommitContextMenu, CommitContextMenuItem } from "./components/CommitContextMenu";
 import { CommitInputModal } from "./components/CommitInputModal";
+import { Resizer } from "./components/Resizer";
+import { TerminalPanel, TerminalPanelLabels } from "./components/TerminalPanel";
 
 type Language = "en" | "zh";
 
@@ -239,6 +241,9 @@ const translations = {
     toastPullDone: "Pulled latest changes from remote.",
     toastPushDone: "Pushed to remote.",
     toastFetchDone: "Fetched remote updates.",
+    terminal: "Terminal",
+    expandTerminal: "Expand terminal",
+    collapseTerminal: "Collapse terminal",
   },
   zh: {
     appTitle: "GitLanes",
@@ -428,6 +433,9 @@ const translations = {
     toastPullDone: "已從遠端拉取最新變更。",
     toastPushDone: "已推送到遠端。",
     toastFetchDone: "已抓取遠端更新。",
+    terminal: "終端機",
+    expandTerminal: "展開終端機",
+    collapseTerminal: "收合終端機",
   },
 };
 
@@ -470,6 +478,21 @@ export default function App() {
   // Command logs telemetry
   const [isGraphMaximized, setIsGraphMaximized] = useState<boolean>(false);
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState<boolean>(true);
+  const [graphHeight, setGraphHeight] = useState<number>(() => {
+    const v = Number(localStorage.getItem("gitlanes.layout.graphHeight"));
+    return Number.isFinite(v) && v > 0 ? v : 360;
+  });
+  const [terminalHeight, setTerminalHeight] = useState<number>(() => {
+    const v = Number(localStorage.getItem("gitlanes.layout.terminalHeight"));
+    return Number.isFinite(v) && v > 0 ? v : 240;
+  });
+  const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(
+    localStorage.getItem("gitlanes.layout.terminalOpen") === "true"
+  );
+  const [workspaceFilesWidth, setWorkspaceFilesWidth] = useState<number>(() => {
+    const v = Number(localStorage.getItem("gitlanes.layout.filesWidth"));
+    return Number.isFinite(v) && v > 0 ? v : 280;
+  });
 
   // Focus view states
   const [selectedCommit, setSelectedCommit] = useState<CommitNode | null>(null);
@@ -1309,6 +1332,20 @@ export default function App() {
   const handlePull = () => runSync("/api/git/pull", t.toastPullDone, "Pull failed");
   const handlePush = () => runSync("/api/git/push", t.toastPushDone, "Push failed");
   const handleFetch = () => runSync("/api/git/fetch", t.toastFetchDone, "Fetch failed");
+
+  const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+
+  const persistGraphHeight = () => localStorage.setItem("gitlanes.layout.graphHeight", String(graphHeight));
+  const persistTerminalHeight = () => localStorage.setItem("gitlanes.layout.terminalHeight", String(terminalHeight));
+  const persistFilesWidth = () => localStorage.setItem("gitlanes.layout.filesWidth", String(workspaceFilesWidth));
+
+  const toggleTerminal = () => {
+    setIsTerminalOpen((v) => {
+      const next = !v;
+      localStorage.setItem("gitlanes.layout.terminalOpen", String(next));
+      return next;
+    });
+  };
 
   const renderRepoSidebar = () => (
     <aside className={`${isRepoSidebarCollapsed ? "w-12" : "w-[280px]"} h-full bg-slate-950 border-r border-slate-900 shrink-0 transition-all duration-200 flex flex-col`}>
