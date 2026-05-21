@@ -877,7 +877,7 @@ export default function App() {
     }
   };
 
-  // 5. Commit with Gemini AI Message generation
+  // 5. Commit with AI message generation
   const handleCommit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commitMessage.trim()) {
