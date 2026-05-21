@@ -62,7 +62,7 @@ export const GitGraph: React.FC<GitGraphProps> = ({
 
   // Assign lanes to commits to draw clean side-by-side branch tracks
   // Simple, deterministic track assignment based on parent links
-  const laneWidth = 12;
+  const laneWidth = 14;
   const nodeRadius = 6;
   const rowHeight = 36;
   const paddingLeft = 16;
