@@ -1828,12 +1828,12 @@ export default function App() {
       )}
 
       {/* Main workspace nav bar */}
-      <nav id="workspace-nav" className="px-6 py-3.5 bg-slate-900 border-b border-slate-800 grid grid-cols-[1fr_auto_1fr] items-center shrink-0 gap-3">
-        {/* Left grid cell: empty spacer; collapses to 0 when narrow so the center can shift left. */}
-        <div className="min-w-0" />
-
-        {/* Branch / repo selector — centered grid cell; truncates instead of overlapping when narrow. */}
-        <div className="relative flex items-center min-w-0 z-10">
+      <nav id="workspace-nav" className="px-6 py-3.5 bg-slate-900 border-b border-slate-800 flex items-center shrink-0 gap-3">
+        {/* Center area: fills the space left of the action buttons and centers the branch/repo selector;
+            the path truncates here instead of ever overlapping the buttons. */}
+        <div className="flex-1 min-w-0 flex justify-center">
+        {/* Branch / repo selector */}
+        <div className="relative flex items-center min-w-0 max-w-full z-10">
           <button
             onClick={() => setIsRepoPanelOpen((v) => !v)}
             title={t.switchRepo}
@@ -1852,9 +1852,10 @@ export default function App() {
           </button>
           {isRepoPanelOpen && renderRepoPanel()}
         </div>
+        </div>
 
-        {/* Action controllers: right grid cell (sync, checkout, merge & settings). */}
-        <div className="flex items-center justify-end gap-3 min-w-0 z-20">
+        {/* Action controllers: right side (sync, checkout, merge & settings). */}
+        <div className="flex items-center justify-end gap-3 shrink-0 z-20">
           {/* Pull / Push / Fetch sync buttons */}
           <button
             onClick={handlePull}
