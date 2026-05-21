@@ -10,6 +10,9 @@ use std::{
 use tauri::{Manager, State};
 use ignore::WalkBuilder;
 
+mod ai;
+mod ai_settings;
+
 #[derive(Debug, Serialize, Clone)]
 struct CommandLog {
     timestamp: String,

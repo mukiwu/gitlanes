@@ -23,3 +23,4 @@ tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 thiserror = "2"
 ignore = "0.4"
+keyring = "3"
