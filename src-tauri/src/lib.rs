@@ -667,11 +667,13 @@ async fn git_ai_commit_message(state: State<'_, AppState>) -> Result<serde_json:
 }
 
 #[tauri::command]
-async fn git_ai_explain_diff(state: State<'_, AppState>, file: String, staged: Option<bool>) -> Result<serde_json::Value, String> {
+async fn git_ai_explain_diff(state: State<'_, AppState>, file: String, staged: Option<bool>, commit: Option<String>) -> Result<serde_json::Value, String> {
     if file.trim().is_empty() {
         return Err("file is required".to_string());
     }
-    let diff = if staged.unwrap_or(false) {
+    let diff = if let Some(commit) = commit.filter(|c| !c.trim().is_empty()) {
+        run_git(&state, &["show", &commit, "--", &file])?.stdout
+    } else if staged.unwrap_or(false) {
         run_git(&state, &["diff", "--cached", "--", &file])?.stdout
     } else {
         run_git(&state, &["diff", "--", &file])?.stdout

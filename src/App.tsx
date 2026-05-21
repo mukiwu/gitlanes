@@ -85,7 +85,6 @@ const translations = {
     createBranch: "Create New Branch",
     commitment: "Commitment",
     commitChanges: "COMMIT CHANGES",
-    terminalReady: "Terminal ready. Execute Git operations in the GUI to stream command telemetry logs here...",
     simulationActive: "Repository Active",
     refreshedAt: "Git Workspace - Refreshed at",
     opened: "Repository opened successfully",
@@ -110,7 +109,6 @@ const translations = {
     emptyFolder: "Empty folder",
     codeEditorTitle: "Workspace Code Editor",
     codeEditorHint: "Select an existing file in the left column or click the + button to write something. Saving updates the file and creates untracked or modified tags.",
-    cliHistory: "Git CLI Command History & Output Stream",
     graphTitle: "Interactive Commit History (DAG)",
     maximizeGraph: "Maximize the commit graph (collapse the panels below)",
     restoreGraph: "Restore the layout",
@@ -220,7 +218,6 @@ const translations = {
     createBranch: "建立新分支",
     commitment: "Commit",
     commitChanges: "COMMIT 變更",
-    terminalReady: "終端機已就緒。透過介面執行 Git 操作後，指令記錄會顯示在這裡...",
     simulationActive: "儲存庫使用中",
     refreshedAt: "Git 工作區 - 更新時間",
     opened: "儲存庫已開啟",
@@ -245,7 +242,6 @@ const translations = {
     emptyFolder: "空資料夾",
     codeEditorTitle: "工作區程式編輯器",
     codeEditorHint: "在左欄選擇現有檔案，或點 + 按鈕新增內容。儲存後會更新檔案並標記為未追蹤或已修改。",
-    cliHistory: "Git CLI 指令記錄與輸出",
     graphTitle: "互動式 Commit 歷史 (DAG)",
     maximizeGraph: "最大化 commit 線圖（收起下方區塊）",
     restoreGraph: "還原版面",
@@ -353,8 +349,6 @@ export default function App() {
   const [activeFile, setActiveFile] = useState<string | null>(null);
 
   // Command logs telemetry
-  const [cmdHistory, setCmdHistory] = useState<any[]>([]);
-  const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(true);
   const [isGraphMaximized, setIsGraphMaximized] = useState<boolean>(false);
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState<boolean>(true);
 
@@ -501,13 +495,6 @@ export default function App() {
       const sandboxRes = await fetch("/api/sandbox/files");
       const sandboxData = await sandboxRes.json();
       setSandboxFiles(sandboxData.files || []);
-
-      // 6. Load command log history
-      const historyRes = await fetch("/api/git/history");
-      if (historyRes.ok) {
-        const historyData = await historyRes.json();
-        setCmdHistory(historyData.history || []);
-      }
 
     } catch (err: any) {
       setApiError("Backend connection error: " + (err.message || String(err)));
@@ -1956,8 +1943,8 @@ export default function App() {
                           <button
                             key={file.path}
                             onClick={() => setCommitDiffFile(file.path)}
-                            className={`w-full flex items-center space-x-2 text-xs px-2 py-1.5 rounded transition-colors text-left ${
-                              commitDiffFile === file.path ? "bg-cyan-950/40 border border-cyan-800/60" : "bg-slate-900/30 hover:bg-slate-900/80 border border-transparent"
+                            className={`w-full flex items-center space-x-2 text-xs px-2 py-1.5 rounded transition-colors text-left cursor-pointer ${
+                              commitDiffFile === file.path ? "bg-cyan-950/40 border border-cyan-800/60" : "bg-slate-900/30 hover:bg-slate-900/80 hover:border-slate-700 border border-transparent"
                             }`}
                           >
                             <span className="text-[9px] px-1 bg-slate-800 text-slate-300 rounded font-semibold shrink-0 uppercase w-5 text-center">{file.status.charAt(0)}</span>
@@ -2019,71 +2006,6 @@ export default function App() {
               <span className="text-slate-500 font-mono text-[11px] font-bold">Expand [ + ]</span>
             </button>
           )}
-
-          {/* Live Git Terminal Console & command line telemetry */}
-          <div className="bg-slate-950 border border-slate-900 rounded-lg flex flex-col overflow-hidden select-text">
-            <div className={`flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-850`}>
-              <div className="flex items-center space-x-2">
-                <span className="font-mono text-xs font-bold text-slate-400">$</span>
-                <h4 className="text-slate-300 font-bold text-xs font-mono tracking-wide uppercase">{t.cliHistory}</h4>
-                {cmdHistory.length > 0 && (
-                  <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-mono font-semibold">
-                    {cmdHistory.length} logs
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={() => setIsTerminalOpen(!isTerminalOpen)}
-                className="text-slate-500 hover:text-slate-300 font-mono text-[11px] font-bold border border-slate-800 hover:border-slate-700 px-2 py-0.5 rounded transition-all cursor-pointer select-none"
-              >
-                {isTerminalOpen ? "Collapse [ - ]" : "Expand [ + ]"}
-              </button>
-            </div>
-
-            {isTerminalOpen && (
-              <div className="h-32 min-h-[120px] overflow-y-auto p-3 bg-slate-950 font-mono text-xs text-slate-300 space-y-3.5 scrollbar-thin">
-                {cmdHistory.length === 0 ? (
-                  <div className="h-full flex items-center justify-center p-4 text-center">
-                    <span className="text-slate-500 text-xs italic">
-                      {t.terminalReady}
-                    </span>
-                  </div>
-                ) : (
-                  cmdHistory.map((item, index) => (
-                    <div key={index} className="border-b border-slate-900/40 pb-2.5 last:border-0 last:pb-0">
-                      <div className="flex items-start md:items-center justify-between gap-2.5 text-slate-400 text-[11px] mb-1">
-                        <div className="flex items-center space-x-1.5">
-                          <span className="text-cyan-500 font-bold font-mono">$</span>
-                          <span className="text-slate-200 select-all font-semibold font-mono">{item.command}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 shrink-0">
-                          <span className="text-[10px] text-slate-600">{item.timestamp}</span>
-                          {item.code === 0 ? (
-                            <span className="text-[9px] font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-900 px-1 py-0.1 rounded uppercase">
-                              Success
-                            </span>
-                          ) : (
-                            <span className="text-[9px] font-bold text-rose-400 bg-rose-950/40 border border-rose-900 px-1 py-0.1 rounded uppercase">
-                              Error
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* stdout & stderr block */}
-                      {(item.stdout || item.stderr) && (
-                        <pre className={`p-2 bg-slate-900/60 rounded text-[11px] overflow-x-auto whitespace-pre-wrap leading-relaxed border border-slate-900 ${
-                          item.code !== 0 ? "text-rose-300 border-rose-950/50" : "text-slate-400"
-                        }`}>
-                          {item.stdout || item.stderr}
-                        </pre>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
           </>
           )}
 

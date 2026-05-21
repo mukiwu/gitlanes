@@ -52,23 +52,3 @@ body,
   --color-emerald-500: #4d9375;
 }
 
-.lang-zh {
-  font-size: 14px;
-}
-
-.lang-zh :where(p, label, input, textarea, select, button, span, pre, div) {
-  font-size: 14px;
-}
-
-.lang-zh :where(
-  .text-\[9px\],
-  .text-\[10px\],
-  .text-\[11px\],
-  .text-xs
-) {
-  font-size: 13px !important;
-}
-
-.lang-zh :where(.text-sm) {
-  font-size: 14px !important;
-}
