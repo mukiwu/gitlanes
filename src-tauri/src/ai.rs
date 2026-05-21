@@ -92,6 +92,68 @@ fn sanitize_error(raw: &str, api_key: Option<&str>) -> String {
     }
 }
 
+const DEFAULT_OLLAMA_ENDPOINT: &str = "http://localhost:11434";
+
+pub async fn ai_generate(
+    provider: AiProvider,
+    model: &str,
+    api_key: Option<&str>,
+    endpoint: Option<&str>,
+    prompt: &str,
+    system: Option<&str>,
+) -> Result<String, String> {
+    let client = reqwest::Client::new();
+
+    let request = match provider {
+        AiProvider::Gemini => {
+            let key = api_key.ok_or_else(|| "Gemini API key is not set.".to_string())?;
+            let url = format!(
+                "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+            );
+            client.post(url).json(&build_gemini_body(prompt, system))
+        }
+        AiProvider::OpenAI => {
+            let key = api_key.ok_or_else(|| "OpenAI API key is not set.".to_string())?;
+            client
+                .post("https://api.openai.com/v1/chat/completions")
+                .bearer_auth(key)
+                .json(&build_openai_body(model, prompt, system))
+        }
+        AiProvider::Anthropic => {
+            let key = api_key.ok_or_else(|| "Anthropic API key is not set.".to_string())?;
+            client
+                .post("https://api.anthropic.com/v1/messages")
+                .header("x-api-key", key)
+                .header("anthropic-version", "2023-06-01")
+                .json(&build_anthropic_body(model, prompt, system))
+        }
+        AiProvider::Ollama => {
+            let base = endpoint.unwrap_or(DEFAULT_OLLAMA_ENDPOINT).trim_end_matches('/');
+            let url = format!("{base}/api/generate");
+            client.post(url).json(&build_ollama_body(model, prompt, system))
+        }
+    };
+
+    let response = request
+        .send()
+        .await
+        .map_err(|err| sanitize_error(&err.to_string(), api_key))?;
+
+    if !response.status().is_success() {
+        let body = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "AI request failed".to_string());
+        return Err(sanitize_error(&body, api_key));
+    }
+
+    let json: Value = response
+        .json()
+        .await
+        .map_err(|err| sanitize_error(&err.to_string(), api_key))?;
+    parse_response(provider, &json)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
