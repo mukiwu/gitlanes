@@ -12,6 +12,11 @@ interface DiffViewerProps {
   onNeedAiSetup?: () => void;
 }
 
+// Session-scoped cache of AI explanations, keyed by file + staged + commit + lang.
+// Survives DiffViewer unmount (closing/reopening a diff) but not an app restart,
+// which avoids showing a stale explanation for a working-tree diff that changed.
+const explanationCache = new Map<string, string>();
+
 // Compact dark-theme styling for the AI explanation markdown.
 const markdownComponents: Components = {
   h1: ({ children }) => <h1 className="text-sm font-bold text-slate-100 mt-3 mb-1.5">{children}</h1>,
@@ -44,10 +49,16 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
   const [isExplaining, setIsExplaining] = useState<boolean>(false);
   const [errorMess, setErrorMess] = useState<string | null>(null);
 
+  const cacheKey = `${commitHash ?? ""}|${staged}|${file}|${lang ?? "en"}`;
+
+  // Restore a previously generated explanation (if any) when the target changes.
+  useEffect(() => {
+    setExplanation(explanationCache.get(cacheKey) ?? "");
+  }, [cacheKey]);
+
   useEffect(() => {
     if (!file) return;
     setIsLoading(true);
-    setExplanation("");
     setErrorMess(null);
 
     let url = `/api/git/diff?file=${encodeURIComponent(file)}&staged=${staged}`;
@@ -97,6 +108,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
       if (!res.ok) throw new Error(data.error || "Could not fetch AI explanation");
       if (data.error) throw new Error(data.error);
       setExplanation(data.explanation);
+      explanationCache.set(cacheKey, data.explanation);
     } catch (err: any) {
       setErrorMess(err.message || "Failed to contact AI provider.");
     } finally {
