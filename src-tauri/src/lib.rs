@@ -655,6 +655,15 @@ async fn git_branch_delete(state: State<'_, AppState>, name: String, force: Opti
 }
 
 #[tauri::command]
+async fn git_branch_rename(state: State<'_, AppState>, old_name: String, new_name: String) -> Result<serde_json::Value, String> {
+    if old_name.trim().is_empty() || new_name.trim().is_empty() {
+        return Err("Branch names are required".to_string());
+    }
+    let result = git_error(run_git(&state, &["branch", "-m", old_name.trim(), new_name.trim()])?, "Failed to rename branch")?;
+    Ok(json!({ "success": true, "message": result.stdout }))
+}
+
+#[tauri::command]
 async fn sandbox_files(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
     let repo_path = match current_repo_path(&state) {
         Ok(path) => path,
@@ -932,6 +941,7 @@ pub fn run() {
             git_branch_create_at,
             git_tag_delete,
             git_branch_delete,
+            git_branch_rename,
             sandbox_files,
             sandbox_file_write,
             sandbox_file_read,
