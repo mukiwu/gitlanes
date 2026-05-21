@@ -20,7 +20,7 @@ const THEME = {
   black: "#0f172a",
   red: "#cb7676",
   green: "#4d9375",
-  yellow: "#dbd7caee",
+  yellow: "#dbd7ca",
   blue: "#6394bf",
   magenta: "#d3869b",
   cyan: "#5eaab5",
