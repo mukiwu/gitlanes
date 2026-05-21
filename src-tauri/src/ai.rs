@@ -68,6 +68,30 @@ impl AiProvider {
     }
 }
 
+fn parse_response(provider: AiProvider, resp: &Value) -> Result<String, String> {
+    let text = match provider {
+        AiProvider::Gemini => resp
+            .pointer("/candidates/0/content/parts/0/text")
+            .and_then(Value::as_str),
+        AiProvider::OpenAI => resp
+            .pointer("/choices/0/message/content")
+            .and_then(Value::as_str),
+        AiProvider::Anthropic => resp
+            .pointer("/content/0/text")
+            .and_then(Value::as_str),
+        AiProvider::Ollama => resp.pointer("/response").and_then(Value::as_str),
+    };
+    text.map(|t| t.trim().to_string())
+        .ok_or_else(|| "AI response did not contain any text.".to_string())
+}
+
+fn sanitize_error(raw: &str, api_key: Option<&str>) -> String {
+    match api_key {
+        Some(key) if !key.is_empty() => raw.replace(key, "[REDACTED]"),
+        _ => raw.to_string(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -133,5 +157,48 @@ mod tests {
 
         let body_no_sys = build_ollama_body("llama3", "hello", None);
         assert_eq!(body_no_sys["prompt"], json!("hello"));
+    }
+
+    #[test]
+    fn parse_gemini_extracts_text() {
+        let resp = json!({ "candidates": [{ "content": { "parts": [{ "text": "  hi  " }] } }] });
+        assert_eq!(parse_response(AiProvider::Gemini, &resp), Ok("hi".to_string()));
+    }
+
+    #[test]
+    fn parse_openai_extracts_text() {
+        let resp = json!({ "choices": [{ "message": { "content": "  hi  " } }] });
+        assert_eq!(parse_response(AiProvider::OpenAI, &resp), Ok("hi".to_string()));
+    }
+
+    #[test]
+    fn parse_anthropic_extracts_text() {
+        let resp = json!({ "content": [{ "type": "text", "text": "  hi  " }] });
+        assert_eq!(parse_response(AiProvider::Anthropic, &resp), Ok("hi".to_string()));
+    }
+
+    #[test]
+    fn parse_ollama_extracts_text() {
+        let resp = json!({ "response": "  hi  " });
+        assert_eq!(parse_response(AiProvider::Ollama, &resp), Ok("hi".to_string()));
+    }
+
+    #[test]
+    fn parse_missing_field_errors() {
+        let resp = json!({ "unexpected": true });
+        assert!(parse_response(AiProvider::OpenAI, &resp).is_err());
+    }
+
+    #[test]
+    fn sanitize_error_redacts_api_key() {
+        let raw = "Invalid key sk-secret123 in request";
+        let cleaned = sanitize_error(raw, Some("sk-secret123"));
+        assert!(!cleaned.contains("sk-secret123"));
+        assert!(cleaned.contains("[REDACTED]"));
+    }
+
+    #[test]
+    fn sanitize_error_passthrough_when_no_key() {
+        assert_eq!(sanitize_error("boom", None), "boom".to_string());
     }
 }
