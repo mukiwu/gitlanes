@@ -103,7 +103,7 @@ if (isTauriRuntime) {
       case "/api/git/ai/commit-message":
         return invokeJson("git_ai_commit_message");
       case "/api/git/ai/explain-diff":
-        return invokeJson("git_ai_explain_diff", { file: body.file, staged: body.staged, commit: body.commit });
+        return invokeJson("git_ai_explain_diff", { file: body.file, staged: body.staged, commit: body.commit, lang: body.lang });
       case "/api/ai/settings":
         return invokeJson("ai_settings_get");
       case "/api/ai/settings/provider":

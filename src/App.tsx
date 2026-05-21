@@ -1811,6 +1811,7 @@ export default function App() {
               <DiffViewer
                 file={diffTarget.path}
                 staged={diffTarget.staged}
+                lang={language}
                 onClose={() => setDiffTarget(null)}
                 onNeedAiSetup={() => {
                   showToast(t.toastSetupAiFirst, true);
@@ -1964,6 +1965,7 @@ export default function App() {
                         file={commitDiffFile}
                         staged={false}
                         commitHash={selectedCommit.hash}
+                        lang={language}
                         onClose={() => setCommitDiffFile(null)}
                         onNeedAiSetup={() => {
                           showToast(t.toastSetupAiFirst, true);

@@ -1,18 +1,40 @@
 import React, { useState, useEffect } from "react";
 import { Sparkles, HelpCircle, FileText, Loader2, AlertCircle } from "lucide-react";
+import ReactMarkdown, { type Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface DiffViewerProps {
   file: string;
   staged: boolean;
   commitHash?: string;
+  lang?: "en" | "zh";
   onClose?: () => void;
   onNeedAiSetup?: () => void;
 }
+
+// Compact dark-theme styling for the AI explanation markdown.
+const markdownComponents: Components = {
+  h1: ({ children }) => <h1 className="text-sm font-bold text-slate-100 mt-3 mb-1.5">{children}</h1>,
+  h2: ({ children }) => <h2 className="text-[13px] font-bold text-slate-100 mt-3 mb-1.5">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-[12px] font-bold text-slate-200 mt-2.5 mb-1">{children}</h3>,
+  p: ({ children }) => <p className="my-1.5 leading-relaxed">{children}</p>,
+  ul: ({ children }) => <ul className="list-disc pl-4 my-1.5 space-y-0.5">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal pl-4 my-1.5 space-y-0.5">{children}</ol>,
+  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+  strong: ({ children }) => <strong className="font-bold text-slate-100">{children}</strong>,
+  em: ({ children }) => <em className="italic text-slate-200">{children}</em>,
+  a: ({ children, href }) => <a href={href} className="text-cyan-400 underline" target="_blank" rel="noreferrer">{children}</a>,
+  code: ({ children }) => <code className="bg-slate-950 border border-slate-800 rounded px-1 py-0.5 font-mono text-[11px] text-amber-300">{children}</code>,
+  pre: ({ children }) => <pre className="bg-slate-950 border border-slate-800 rounded p-2 my-2 overflow-x-auto text-[11px] font-mono whitespace-pre-wrap">{children}</pre>,
+  blockquote: ({ children }) => <blockquote className="border-l-2 border-amber-500/40 pl-3 my-1.5 text-slate-400">{children}</blockquote>,
+  hr: () => <hr className="border-slate-800 my-3" />,
+};
 
 export const DiffViewer: React.FC<DiffViewerProps> = ({
   file,
   staged,
   commitHash,
+  lang,
   onClose,
   onNeedAiSetup,
 }) => {
@@ -69,7 +91,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
       const res = await fetch("/api/git/ai/explain-diff", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ file, staged, commit: commitHash }),
+        body: JSON.stringify({ file, staged, commit: commitHash, lang }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not fetch AI explanation");
@@ -193,20 +215,9 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
                     Recalculate
                   </button>
                 </div>
-                {explanation.split("\n\n").map((para, i) => (
-                  <p key={i}>
-                    {para.split("\n").map((line, j) => {
-                      if (line.startsWith("-") || line.startsWith("*")) {
-                        return (
-                          <span key={j} className="block pl-3 border-l-2 border-amber-500/40 my-1">
-                            {line.substring(2)}
-                          </span>
-                        );
-                      }
-                      return <span key={j} className="block">{line}</span>;
-                    })}
-                  </p>
-                ))}
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                  {explanation}
+                </ReactMarkdown>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-center text-slate-500">

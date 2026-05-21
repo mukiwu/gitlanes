@@ -667,7 +667,7 @@ async fn git_ai_commit_message(state: State<'_, AppState>) -> Result<serde_json:
 }
 
 #[tauri::command]
-async fn git_ai_explain_diff(state: State<'_, AppState>, file: String, staged: Option<bool>, commit: Option<String>) -> Result<serde_json::Value, String> {
+async fn git_ai_explain_diff(state: State<'_, AppState>, file: String, staged: Option<bool>, commit: Option<String>, lang: Option<String>) -> Result<serde_json::Value, String> {
     if file.trim().is_empty() {
         return Err("file is required".to_string());
     }
@@ -682,7 +682,11 @@ async fn git_ai_explain_diff(state: State<'_, AppState>, file: String, staged: O
         return Ok(json!({ "explanation": "No dynamic differences detected on this file." }));
     }
     let cfg = ai_settings::load()?;
-    let prompt = format!("As a senior software architect, analyze this diff from git on file \"{file}\" and explain the code changes in incredibly simple, scannable human terms.\nDetail the logical modifications, point out what was added or removed, and explain why this change would be made. Feel free to use brief markdown formatting with bolding or bullet points.\nKeep the answer concise and highly readable.\n\nGit Diff:\n{diff}");
+    let language_instruction = match lang.as_deref() {
+        Some("zh") => "Respond in 正體中文 (Traditional Chinese).",
+        _ => "Respond in English.",
+    };
+    let prompt = format!("As a senior software architect, analyze this diff from git on file \"{file}\" and explain the code changes in incredibly simple, scannable human terms.\nDetail the logical modifications, point out what was added or removed, and explain why this change would be made. Feel free to use brief markdown formatting with bolding or bullet points.\nKeep the answer concise and highly readable.\n{language_instruction}\n\nGit Diff:\n{diff}");
     let explanation = ai::ai_generate(
         cfg.provider,
         &cfg.model,
