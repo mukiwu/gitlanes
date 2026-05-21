@@ -636,6 +636,25 @@ async fn git_branch_create_at(state: State<'_, AppState>, name: String, commit: 
 }
 
 #[tauri::command]
+async fn git_tag_delete(state: State<'_, AppState>, name: String) -> Result<serde_json::Value, String> {
+    if name.trim().is_empty() {
+        return Err("Tag name is required".to_string());
+    }
+    let result = git_error(run_git(&state, &["tag", "-d", name.trim()])?, "Failed to delete tag")?;
+    Ok(json!({ "success": true, "message": result.stdout }))
+}
+
+#[tauri::command]
+async fn git_branch_delete(state: State<'_, AppState>, name: String, force: Option<bool>) -> Result<serde_json::Value, String> {
+    if name.trim().is_empty() {
+        return Err("Branch name is required".to_string());
+    }
+    let flag = if force.unwrap_or(false) { "-D" } else { "-d" };
+    let result = git_error(run_git(&state, &["branch", flag, name.trim()])?, "Failed to delete branch")?;
+    Ok(json!({ "success": true, "message": result.stdout }))
+}
+
+#[tauri::command]
 async fn sandbox_files(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
     let repo_path = match current_repo_path(&state) {
         Ok(path) => path,
@@ -911,6 +930,8 @@ pub fn run() {
             git_cherry_pick,
             git_tag_create,
             git_branch_create_at,
+            git_tag_delete,
+            git_branch_delete,
             sandbox_files,
             sandbox_file_write,
             sandbox_file_read,
