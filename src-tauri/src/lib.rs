@@ -1,5 +1,5 @@
 use chrono::Local;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::json;
 use std::{
     fs,
@@ -83,26 +83,6 @@ struct GitIdentity {
     user_name: String,
     #[serde(rename = "userEmail")]
     user_email: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct GeminiResponse {
-    candidates: Option<Vec<GeminiCandidate>>,
-}
-
-#[derive(Debug, Deserialize)]
-struct GeminiCandidate {
-    content: Option<GeminiContent>,
-}
-
-#[derive(Debug, Deserialize)]
-struct GeminiContent {
-    parts: Option<Vec<GeminiPart>>,
-}
-
-#[derive(Debug, Deserialize)]
-struct GeminiPart {
-    text: Option<String>,
 }
 
 fn ensure_dir(path: &Path) -> Result<(), String> {
@@ -644,46 +624,20 @@ async fn git_stash_pop(state: State<'_, AppState>) -> Result<serde_json::Value, 
     git_error(run_git(&state, &["stash", "pop"])?, "Stash pop failed").map(|result| json!({ "success": true, "message": result.stdout }))
 }
 
-async fn gemini_generate(prompt: String, system_instruction: Option<&str>) -> Result<String, String> {
-    let key = std::env::var("GEMINI_API_KEY").map_err(|_| "GEMINI_API_KEY is not configured.".to_string())?;
-    let url = format!("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={key}");
-    let mut body = json!({
-        "contents": [{ "parts": [{ "text": prompt }] }]
-    });
-    if let Some(system_instruction) = system_instruction {
-        body["systemInstruction"] = json!({ "parts": [{ "text": system_instruction }] });
-    }
-    let response = reqwest::Client::new()
-        .post(url)
-        .json(&body)
-        .send()
-        .await
-        .map_err(|err| err.to_string())?;
-    if !response.status().is_success() {
-        return Err(response.text().await.unwrap_or_else(|_| "Gemini request failed".to_string()));
-    }
-    let body: GeminiResponse = response.json().await.map_err(|err| err.to_string())?;
-    Ok(body
-        .candidates
-        .and_then(|mut candidates| candidates.pop())
-        .and_then(|candidate| candidate.content)
-        .and_then(|content| content.parts)
-        .and_then(|mut parts| parts.pop())
-        .and_then(|part| part.text)
-        .unwrap_or_default()
-        .trim()
-        .to_string())
-}
-
 #[tauri::command]
 async fn git_ai_commit_message(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
     let diff = run_git(&state, &["diff", "--cached"])?.stdout;
     if diff.is_empty() {
-        return Ok(json!({ "message": "", "error": "No changes are staged! Stage some modifications first to let Gemini generate a message." }));
+        return Ok(json!({ "message": "", "error": "No changes are staged! Stage some modifications first to let AI generate a message." }));
     }
+    let cfg = ai_settings::load()?;
     let prompt = format!("You are an expert Git GUI assistant. Analyze the following cached/staged git diff and write a beautifully structured Conventional Commit message (e.g., 'feat(auth): add login validation' or 'fix(calculator): resolve division by zero').\nVerify that the message represents only the actual modifications in the code. Keep it brief (ideally under 72 characters for the header). Include bullet points below if there are multiple substantial changes.\n\nDo not include markdown code block formatting--just return the plain text commit message.\n\nStaged Diff:\n{diff}");
-    let message = gemini_generate(
-        prompt,
+    let message = ai::ai_generate(
+        cfg.provider,
+        &cfg.model,
+        cfg.api_key.as_deref(),
+        cfg.endpoint.as_deref(),
+        &prompt,
         Some("You are a professional commit analyst that writes Conventional Commit messages based on code diffs."),
     )
     .await?;
@@ -703,8 +657,17 @@ async fn git_ai_explain_diff(state: State<'_, AppState>, file: String, staged: O
     if diff.is_empty() {
         return Ok(json!({ "explanation": "No dynamic differences detected on this file." }));
     }
+    let cfg = ai_settings::load()?;
     let prompt = format!("As a senior software architect, analyze this diff from git on file \"{file}\" and explain the code changes in incredibly simple, scannable human terms.\nDetail the logical modifications, point out what was added or removed, and explain why this change would be made. Feel free to use brief markdown formatting with bolding or bullet points.\nKeep the answer concise and highly readable.\n\nGit Diff:\n{diff}");
-    let explanation = gemini_generate(prompt, None).await?;
+    let explanation = ai::ai_generate(
+        cfg.provider,
+        &cfg.model,
+        cfg.api_key.as_deref(),
+        cfg.endpoint.as_deref(),
+        &prompt,
+        None,
+    )
+    .await?;
     Ok(json!({ "explanation": if explanation.is_empty() { "No explanation could be compiled.".to_string() } else { explanation } }))
 }
 
