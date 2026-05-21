@@ -106,7 +106,6 @@ const translations = {
     authorLabel: "Author",
     dateLabel: "Date",
     subjectLabel: "Subject Description",
-    workspaceActions: "Workspace Actions",
     workspaceTitle: "Workspace",
     emptyFolder: "Empty folder",
     codeEditorTitle: "Workspace Code Editor",
@@ -278,7 +277,6 @@ const translations = {
     authorLabel: "作者",
     dateLabel: "日期",
     subjectLabel: "說明",
-    workspaceActions: "工作區操作",
     workspaceTitle: "工作區",
     emptyFolder: "空資料夾",
     codeEditorTitle: "工作區程式編輯器",
@@ -2296,7 +2294,7 @@ export default function App() {
 
       {/* Custom Confirmation Dialog Overlay */}
       {confirmModal.isOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-start space-x-3">
               <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-500 shrink-0">

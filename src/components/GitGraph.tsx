@@ -318,6 +318,7 @@ export const GitGraph: React.FC<GitGraphProps> = ({
                         branch: "bg-cyan-950 border-cyan-800 text-cyan-300",
                         tag: "bg-amber-950 border-amber-800 text-amber-300",
                         remote: "bg-slate-800 border-slate-700 text-slate-400",
+                        unknown: "bg-slate-900 border-slate-800 text-slate-500",
                       };
                       const deletable = r.kind === "tag" || r.kind === "branch";
                       return (
