@@ -11,28 +11,34 @@ interface XTermViewProps {
   exitedLabel: string;
 }
 
-// Vitesse Dark Soft palette — aligned with the rest of the app.
+// Vitesse Dark Soft palette — values pulled from src/index.css @theme block.
+// background MUST match the surrounding container <div> so the panel padding
+// blends seamlessly with the cell area.
+const TERM_BG = "#1b1b1b"; // --color-slate-950
 const THEME = {
-  background: "#0f172a",
-  foreground: "#cbd5e1",
-  cursor: "#22d3ee",
-  selectionBackground: "#1e293b",
-  black: "#0f172a",
-  red: "#cb7676",
-  green: "#4d9375",
-  yellow: "#dbd7ca",
-  blue: "#6394bf",
-  magenta: "#d3869b",
-  cyan: "#5eaab5",
-  white: "#cdd6f4",
-  brightBlack: "#475569",
+  background: TERM_BG,
+  foreground: "#c9c5b8",          // slate-200
+  cursor: "#5eaab5",               // cyan-500
+  cursorAccent: TERM_BG,
+  selectionBackground: "#363636",  // slate-700
+  selectionForeground: "#dbd7ca",  // slate-100
+  // Vitesse Dark Soft ANSI palette (matches the app accents)
+  black: "#1b1b1b",
+  red: "#cb7676",                  // rose-500
+  green: "#4d9375",                // emerald-500
+  yellow: "#dbbd63",               // amber-500
+  blue: "#5eaab5",                 // cyan-500 (vitesse uses teal for blue)
+  magenta: "#d9739f",              // purple-500
+  cyan: "#6fb8c2",                 // cyan-400
+  white: "#c9c5b8",                // slate-200
+  brightBlack: "#85827b",          // slate-400
   brightRed: "#e09b9b",
   brightGreen: "#7ab399",
-  brightYellow: "#f0e7c7",
-  brightBlue: "#8fb6d6",
-  brightMagenta: "#e0a4b8",
-  brightCyan: "#8cc0c9",
-  brightWhite: "#f1f5f9",
+  brightYellow: "#e6cc77",         // amber-400
+  brightBlue: "#8fc6cf",
+  brightMagenta: "#e69bb8",
+  brightCyan: "#8cc7d0",
+  brightWhite: "#dbd7ca",          // slate-100
 };
 
 const bytesToBase64 = (bytes: Uint8Array): string => {
@@ -129,5 +135,11 @@ export const XTermView: React.FC<XTermViewProps> = ({ cwd, exitedLabel }) => {
     };
   }, [cwd]);
 
-  return <div ref={hostRef} className="h-full w-full bg-slate-950" />;
+  return (
+    <div
+      ref={hostRef}
+      style={{ backgroundColor: TERM_BG }}
+      className="h-full w-full px-3 py-2"
+    />
+  );
 };
