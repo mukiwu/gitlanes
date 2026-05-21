@@ -598,6 +598,44 @@ async fn git_revert(state: State<'_, AppState>, commit: String) -> Result<serde_
 }
 
 #[tauri::command]
+async fn git_cherry_pick(state: State<'_, AppState>, commit: String) -> Result<serde_json::Value, String> {
+    if commit.trim().is_empty() {
+        return Err("Commit hash is required".to_string());
+    }
+    let result = git_error(run_git(&state, &["cherry-pick", commit.trim()])?, "Cherry-pick failed")?;
+    Ok(json!({ "success": true, "message": result.stdout }))
+}
+
+#[tauri::command]
+async fn git_tag_create(state: State<'_, AppState>, name: String, commit: String, message: Option<String>) -> Result<serde_json::Value, String> {
+    if name.trim().is_empty() {
+        return Err("Tag name is required".to_string());
+    }
+    if commit.trim().is_empty() {
+        return Err("Commit hash is required".to_string());
+    }
+    let name = name.trim();
+    let commit = commit.trim();
+    let result = match message.as_deref().map(str::trim).filter(|m| !m.is_empty()) {
+        Some(msg) => git_error(run_git(&state, &["tag", "-a", name, commit, "-m", msg])?, "Failed to create tag")?,
+        None => git_error(run_git(&state, &["tag", name, commit])?, "Failed to create tag")?,
+    };
+    Ok(json!({ "success": true, "message": result.stdout }))
+}
+
+#[tauri::command]
+async fn git_branch_create_at(state: State<'_, AppState>, name: String, commit: String) -> Result<serde_json::Value, String> {
+    if name.trim().is_empty() {
+        return Err("Branch name is required".to_string());
+    }
+    if commit.trim().is_empty() {
+        return Err("Commit hash is required".to_string());
+    }
+    let result = git_error(run_git(&state, &["checkout", "-b", name.trim(), commit.trim()])?, "Failed to create branch")?;
+    Ok(json!({ "success": true, "message": result.stdout }))
+}
+
+#[tauri::command]
 async fn sandbox_files(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
     let repo_path = match current_repo_path(&state) {
         Ok(path) => path,
@@ -870,6 +908,9 @@ pub fn run() {
             git_history,
             git_reset,
             git_revert,
+            git_cherry_pick,
+            git_tag_create,
+            git_branch_create_at,
             sandbox_files,
             sandbox_file_write,
             sandbox_file_read,
