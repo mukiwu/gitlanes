@@ -1149,6 +1149,54 @@ export default function App() {
     }
   };
 
+  const handleDeleteTag = (name: string) => {
+    requestConfirm(
+      t.confirmDeleteTagTitle(name),
+      t.confirmDeleteTagMessage(name),
+      async () => {
+        try {
+          const res = await fetch("/api/git/tag/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Failed to delete tag");
+          showToast(t.toastTagDeleted(name));
+          refreshState();
+        } catch (err: unknown) {
+          showToast(err instanceof Error ? err.message : "Failed to delete tag", true);
+        }
+      },
+      t.confirmDeleteTagBtn,
+      "bg-rose-600 hover:bg-rose-500"
+    );
+  };
+
+  const handleDeleteBranch = (name: string, force: boolean) => {
+    requestConfirm(
+      force ? t.confirmForceDeleteBranchTitle(name) : t.confirmDeleteBranchTitle(name),
+      force ? t.confirmForceDeleteBranchMessage(name) : t.confirmDeleteBranchMessage(name),
+      async () => {
+        try {
+          const res = await fetch("/api/git/branch/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, force }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Failed to delete branch");
+          showToast(t.toastBranchDeleted(name));
+          refreshState();
+        } catch (err: unknown) {
+          showToast(err instanceof Error ? err.message : "Failed to delete branch", true);
+        }
+      },
+      force ? t.confirmForceDeleteBranchBtn : t.confirmDeleteBranchBtn,
+      "bg-rose-600 hover:bg-rose-500"
+    );
+  };
+
   const renderRepoSidebar = () => (
     <aside className={`${isRepoSidebarCollapsed ? "w-12" : "w-[280px]"} h-full bg-slate-950 border-r border-slate-900 shrink-0 transition-all duration-200 flex flex-col`}>
       <div className="h-12 px-3 border-b border-slate-900 flex items-center justify-between">
@@ -1619,6 +1667,16 @@ export default function App() {
     { key: "copymsg", label: t.menuCopyMessage, onSelect: () => handleCopy(commit.message, "message") },
   ];
 
+  const buildRefMenuItems = (refName: string, kind: string): CommitContextMenuItem[] => {
+    if (kind === "tag") {
+      return [{ key: "deltag", label: `${t.menuDeleteTag} ${refName}`, danger: true, onSelect: () => handleDeleteTag(refName) }];
+    }
+    return [
+      { key: "delbranch", label: `${t.menuDeleteBranch} ${refName}`, onSelect: () => handleDeleteBranch(refName, false) },
+      { key: "forcedel", label: `${t.menuForceDeleteBranch} ${refName}`, danger: true, onSelect: () => handleDeleteBranch(refName, true) },
+    ];
+  };
+
   // Find the files currently staged or modified
   const stagedFiles = gitFiles.filter((f) => f.staged);
   const modifiedFiles = gitFiles.filter((f) => f.modified);
@@ -2019,6 +2077,7 @@ export default function App() {
                 setDiffTarget(null); // click a commit clears instant diff targets
               }}
               onCommitContextMenu={(commit, x, y) => setContextMenu({ commit, x, y })}
+              onRefContextMenu={(ref, x, y) => setRefMenu({ refName: ref.name, kind: ref.kind, x, y })}
             />
           </div>
 
@@ -2188,6 +2247,15 @@ export default function App() {
           y={contextMenu.y}
           items={buildCommitMenuItems(contextMenu.commit)}
           onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      {refMenu && (
+        <CommitContextMenu
+          x={refMenu.x}
+          y={refMenu.y}
+          items={buildRefMenuItems(refMenu.refName, refMenu.kind)}
+          onClose={() => setRefMenu(null)}
         />
       )}
 
