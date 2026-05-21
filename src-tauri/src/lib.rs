@@ -392,7 +392,7 @@ async fn git_log(state: State<'_, AppState>, limit: Option<usize>, skip: Option<
         "--topo-order",
         "--decorate=short",
         "--pretty=format:%h|%p|%an|%ad|%s",
-        "--date=short",
+        "--date=format-local:%Y-%m-%d %H:%M",
         max_count.as_str(),
         skip_arg.as_str(),
     ];
