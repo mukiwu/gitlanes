@@ -64,7 +64,7 @@ export const GitGraph: React.FC<GitGraphProps> = ({
   // Simple, deterministic track assignment based on parent links
   const laneWidth = 12;
   const nodeRadius = 6;
-  const rowHeight = 44;
+  const rowHeight = 36;
   const paddingLeft = 16;
   const paddingTop = 20;
 
