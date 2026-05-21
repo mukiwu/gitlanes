@@ -1083,6 +1083,72 @@ export default function App() {
     }
   };
 
+  const handleCherryPick = (commit: CommitNode) => {
+    requestConfirm(
+      t.confirmCherryPickTitle(commit.hash),
+      t.confirmCherryPickMessage(commit.hash),
+      async () => {
+        try {
+          const res = await fetch("/api/git/cherry-pick", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ commit: commit.hash }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Cherry-pick failed");
+          showToast(t.toastCherryPicked);
+          refreshState();
+        } catch (err: unknown) {
+          showToast(err instanceof Error ? err.message : "Cherry-pick failed", true);
+        }
+      },
+      t.confirmCherryPickBtn,
+      "bg-amber-600 hover:bg-amber-500"
+    );
+  };
+
+  const handleCreateTag = async (commit: CommitNode, name: string, message: string) => {
+    try {
+      const res = await fetch("/api/git/tag/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, commit: commit.hash, message }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create tag");
+      showToast(t.toastTagCreated(name));
+      refreshState();
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : "Failed to create tag", true);
+    }
+  };
+
+  const handleCreateBranchAt = async (commit: CommitNode, name: string) => {
+    try {
+      const res = await fetch("/api/git/branch/create-at", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, commit: commit.hash }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create branch");
+      showToast(t.toastBranchCreatedAt(name));
+      setSelectedCommit(null);
+      refreshState();
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : "Failed to create branch", true);
+    }
+  };
+
+  const handleCopy = async (text: string, kind: "sha" | "message") => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast(kind === "sha" ? t.toastCopiedSha : t.toastCopiedMessage);
+    } catch {
+      showToast(t.toastCopyFailed, true);
+    }
+  };
+
   const renderRepoSidebar = () => (
     <aside className={`${isRepoSidebarCollapsed ? "w-12" : "w-[280px]"} h-full bg-slate-950 border-r border-slate-900 shrink-0 transition-all duration-200 flex flex-col`}>
       <div className="h-12 px-3 border-b border-slate-900 flex items-center justify-between">
@@ -1481,6 +1547,77 @@ export default function App() {
       </div>
     );
   }
+
+  const buildCommitMenuItems = (commit: CommitNode): CommitContextMenuItem[] => [
+    {
+      key: "checkout",
+      label: t.menuCheckout,
+      onSelect: () => requestConfirm(
+        t.confirmCheckoutTitle(commit.hash),
+        t.confirmCheckoutMessage,
+        async () => {
+          setIsActionLoading(true);
+          try {
+            const res = await fetch("/api/git/branch/checkout", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name: commit.hash }),
+            });
+            if (!res.ok) throw new Error("Hard checkout error");
+            showToast(t.toastCheckedOut(commit.hash));
+            setSelectedCommit(null);
+            refreshState();
+          } catch (err: unknown) {
+            showToast(err instanceof Error ? err.message : "Checkout failed", true);
+          } finally {
+            setIsActionLoading(false);
+          }
+        },
+        t.confirmCheckoutBtn,
+        "bg-amber-600 hover:bg-amber-500"
+      ),
+    },
+    { key: "cherry", label: t.menuCherryPick, onSelect: () => handleCherryPick(commit) },
+    {
+      key: "revert",
+      label: t.menuRevert,
+      onSelect: () => requestConfirm(
+        t.confirmRevertTitle(commit.hash),
+        t.confirmRevertMessage,
+        () => handleGitRevert(commit.hash),
+        t.confirmRevertBtn,
+        "bg-purple-600 hover:bg-purple-500"
+      ),
+    },
+    {
+      key: "soft",
+      label: t.menuResetSoft,
+      dividerBefore: true,
+      onSelect: () => requestConfirm(
+        t.confirmSoftResetTitle(commit.hash),
+        t.confirmSoftResetMessage,
+        () => handleGitReset(commit.hash, "soft"),
+        t.confirmSoftResetBtn,
+        "bg-cyan-600 hover:bg-cyan-500"
+      ),
+    },
+    {
+      key: "hard",
+      label: t.menuResetHard,
+      danger: true,
+      onSelect: () => requestConfirm(
+        t.confirmHardResetTitle(commit.hash),
+        t.confirmHardResetMessage,
+        () => handleGitReset(commit.hash, "hard"),
+        t.confirmHardResetBtn,
+        "bg-rose-600 hover:bg-rose-500"
+      ),
+    },
+    { key: "tag", label: t.menuCreateTag, dividerBefore: true, onSelect: () => setInputModal({ mode: "tag", commit }) },
+    { key: "branch", label: t.menuCreateBranch, onSelect: () => setInputModal({ mode: "branch", commit }) },
+    { key: "copysha", label: t.menuCopySha, dividerBefore: true, onSelect: () => handleCopy(commit.hash, "sha") },
+    { key: "copymsg", label: t.menuCopyMessage, onSelect: () => handleCopy(commit.message, "message") },
+  ];
 
   // Find the files currently staged or modified
   const stagedFiles = gitFiles.filter((f) => f.staged);
@@ -1881,6 +2018,7 @@ export default function App() {
                 setSelectedCommit(commit);
                 setDiffTarget(null); // click a commit clears instant diff targets
               }}
+              onCommitContextMenu={(commit, x, y) => setContextMenu({ commit, x, y })}
             />
           </div>
 
@@ -2043,6 +2181,50 @@ export default function App() {
           keyStoredHint: t.aiKeyStoredHint,
         } satisfies AiSettingsLabels}
       />
+
+      {contextMenu && (
+        <CommitContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={buildCommitMenuItems(contextMenu.commit)}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      {inputModal?.mode === "tag" && (
+        <CommitInputModal
+          open
+          title={t.tagModalTitle}
+          fields={[
+            { key: "name", label: t.tagNameLabel, placeholder: "v1.0.0", required: true },
+            { key: "message", label: t.tagMessageLabel, multiline: true },
+          ]}
+          confirmLabel={t.modalConfirm}
+          cancelLabel={t.modalCancel}
+          onConfirm={(values) => {
+            const commit = inputModal.commit;
+            setInputModal(null);
+            handleCreateTag(commit, values.name.trim(), (values.message ?? "").trim());
+          }}
+          onClose={() => setInputModal(null)}
+        />
+      )}
+
+      {inputModal?.mode === "branch" && (
+        <CommitInputModal
+          open
+          title={t.branchModalTitle}
+          fields={[{ key: "name", label: t.branchNameLabel, placeholder: "feature/my-branch", required: true }]}
+          confirmLabel={t.modalConfirm}
+          cancelLabel={t.modalCancel}
+          onConfirm={(values) => {
+            const commit = inputModal.commit;
+            setInputModal(null);
+            handleCreateBranchAt(commit, values.name.trim());
+          }}
+          onClose={() => setInputModal(null)}
+        />
+      )}
 
       {/* Custom Confirmation Dialog Overlay */}
       {confirmModal.isOpen && (
