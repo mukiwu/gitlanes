@@ -30,6 +30,7 @@ import { GitFile, CommitNode, Branch, StashItem } from "./types";
 import { GitGraph } from "./components/GitGraph";
 import { CodeEditor } from "./components/CodeEditor";
 import { DiffViewer } from "./components/DiffViewer";
+import { AiSettingsModal, AiSettingsLabels } from "./components/AiSettingsModal";
 
 type Language = "en" | "zh";
 
@@ -161,6 +162,21 @@ const translations = {
     confirmRevertTitle: (hash: string) => `Revert Commit ${hash}?`,
     confirmRevertMessage: "This runs 'git revert --no-edit'. A new commit will be automatically created that cleanly rollbacks / cancels the edits in this selected commit.",
     confirmRevertBtn: "Confirm Revert",
+    aiSettings: "AI Settings",
+    aiSettingsTitle: "AI Settings",
+    aiProvider: "Provider",
+    aiModel: "Model",
+    aiCustomModel: "Custom…",
+    aiApiKey: "API Key",
+    aiEndpoint: "Endpoint URL",
+    aiClearKey: "Clear",
+    aiTest: "Test Connection",
+    aiTesting: "Testing…",
+    aiTestOk: "Connection succeeded",
+    aiCancel: "Cancel",
+    aiSave: "Save",
+    aiKeyStoredHint: "A key is stored. Leave blank to keep it.",
+    toastSetupAiFirst: "Please set up an AI provider first.",
   },
   zh: {
     appTitle: "GitLanes",
@@ -278,6 +294,21 @@ const translations = {
     confirmRevertTitle: (hash: string) => `Revert commit ${hash}？`,
     confirmRevertMessage: "這會執行 'git revert --no-edit'。系統會自動建立一個新 commit，乾淨地回復／取消此 commit 的變更。",
     confirmRevertBtn: "確認 Revert",
+    aiSettings: "AI 設定",
+    aiSettingsTitle: "AI 設定",
+    aiProvider: "供應商",
+    aiModel: "模型",
+    aiCustomModel: "自訂…",
+    aiApiKey: "API Key",
+    aiEndpoint: "Endpoint URL",
+    aiClearKey: "清除",
+    aiTest: "測試連線",
+    aiTesting: "測試中…",
+    aiTestOk: "連線成功",
+    aiCancel: "取消",
+    aiSave: "儲存",
+    aiKeyStoredHint: "已儲存金鑰，留空則保留現有金鑰。",
+    toastSetupAiFirst: "請先設定 AI provider。",
   },
 };
 
@@ -303,6 +334,7 @@ export default function App() {
   const [isRepoSidebarCollapsed, setIsRepoSidebarCollapsed] = useState<boolean>(false);
   const [isRepoPanelOpen, setIsRepoPanelOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isAiSettingsOpen, setIsAiSettingsOpen] = useState<boolean>(false);
   const [currentBranch, setCurrentBranch] = useState<string>("main");
   const [gitFiles, setGitFiles] = useState<GitFile[]>([]);
   const [commits, setCommits] = useState<CommitNode[]>([]);
@@ -879,13 +911,25 @@ export default function App() {
       return;
     }
 
+    try {
+      const settingsRes = await fetch("/api/ai/settings");
+      const settings = await settingsRes.json();
+      if (!settings.hasKey) {
+        showToast(t.toastSetupAiFirst, true);
+        setIsAiSettingsOpen(true);
+        return;
+      }
+    } catch {
+      showToast(t.toastSetupAiFirst, true);
+      setIsAiSettingsOpen(true);
+      return;
+    }
+
     setIsAiLoading(true);
     try {
-      const res = await fetch("/api/git/ai/commit-message", {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("Could not invoke Gemini API.");
+      const res = await fetch("/api/git/ai/commit-message", { method: "POST" });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not invoke AI provider.");
       if (data.error) throw new Error(data.error);
 
       setCommitMessage(data.message);
@@ -1458,6 +1502,17 @@ export default function App() {
                     </button>
                   </div>
 
+                  <button
+                    onClick={() => {
+                      setIsSettingsOpen(false);
+                      setIsAiSettingsOpen(true);
+                    }}
+                    className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs text-slate-300 hover:bg-slate-800/60 rounded font-mono cursor-pointer"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+                    {t.aiSettings}
+                  </button>
+
                   <div className="my-1 border-t border-slate-800" />
 
                   {/* Close repository */}
@@ -1738,6 +1793,10 @@ export default function App() {
                 file={diffTarget.path}
                 staged={diffTarget.staged}
                 onClose={() => setDiffTarget(null)}
+                onNeedAiSetup={() => {
+                  showToast(t.toastSetupAiFirst, true);
+                  setIsAiSettingsOpen(true);
+                }}
               />
             ) : selectedCommit ? (
               /* Selected commit historical inspector panel */
@@ -1961,6 +2020,26 @@ export default function App() {
         </div>
         <span>{t.refreshedAt} {new Date().toLocaleTimeString()}</span>
       </footer>
+
+      <AiSettingsModal
+        open={isAiSettingsOpen}
+        onClose={() => setIsAiSettingsOpen(false)}
+        labels={{
+          title: t.aiSettingsTitle,
+          provider: t.aiProvider,
+          model: t.aiModel,
+          custom: t.aiCustomModel,
+          apiKey: t.aiApiKey,
+          endpoint: t.aiEndpoint,
+          clear: t.aiClearKey,
+          test: t.aiTest,
+          testing: t.aiTesting,
+          testOk: t.aiTestOk,
+          cancel: t.aiCancel,
+          save: t.aiSave,
+          keyStoredHint: t.aiKeyStoredHint,
+        } satisfies AiSettingsLabels}
+      />
 
       {/* Custom Confirmation Dialog Overlay */}
       {confirmModal.isOpen && (
