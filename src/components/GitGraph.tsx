@@ -320,14 +320,16 @@ export const GitGraph: React.FC<GitGraphProps> = ({
                         remote: "bg-slate-800 border-slate-700 text-slate-400",
                         unknown: "bg-slate-900 border-slate-800 text-slate-500",
                       };
-                      const deletable = r.kind === "tag" || r.kind === "branch";
+                      // head = current branch, branch = other local branch, tag = tag.
+                      // remote / unknown are read-only (no context menu).
+                      const interactive = r.kind === "tag" || r.kind === "branch" || r.kind === "head";
                       return (
                         <span
                           key={`${r.kind}:${r.name}`}
                           onClick={(e) => e.stopPropagation()}
-                          onContextMenu={deletable ? (e) => { e.preventDefault(); e.stopPropagation(); onRefContextMenu?.(r, e.clientX, e.clientY); } : undefined}
-                          title={deletable ? `${r.name} — right-click to delete` : r.name}
-                          className={`flex items-center space-x-0.5 border text-[12px] px-1.5 py-0.5 rounded font-medium select-none shrink-0 ${palette[r.kind] ?? palette.branch} ${deletable ? "cursor-context-menu" : ""}`}
+                          onContextMenu={interactive ? (e) => { e.preventDefault(); e.stopPropagation(); onRefContextMenu?.(r, e.clientX, e.clientY); } : undefined}
+                          title={interactive ? `${r.name} — right-click for options` : r.name}
+                          className={`flex items-center space-x-0.5 border text-[12px] px-1.5 py-0.5 rounded font-medium select-none shrink-0 ${palette[r.kind] ?? palette.branch} ${interactive ? "cursor-context-menu" : ""}`}
                         >
                           {r.kind === "tag" && <Tag className="h-2.5 w-2.5" />}
                           {r.kind === "head" && <Check className="h-2.5 w-2.5" />}

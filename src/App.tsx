@@ -1743,7 +1743,14 @@ export default function App() {
     if (kind === "tag") {
       return [{ key: "deltag", label: `${t.menuDeleteTag} ${refName}`, danger: true, onSelect: () => handleDeleteTag(refName) }];
     }
-    // branch
+    if (kind === "head") {
+      // Current branch: checkout-self / merge-self / delete-self don't apply.
+      return [
+        { key: "rename", label: t.menuRenameBranch, onSelect: () => setRenameModal({ branch: refName }) },
+        { key: "copy", label: t.menuCopyBranchName, onSelect: () => handleCopyBranchName(refName) },
+      ];
+    }
+    // other local branch
     return [
       { key: "checkout", label: t.menuCheckoutBranch, onSelect: () => handleCheckoutBranch(refName) },
       { key: "merge", label: t.menuMergeBranch, onSelect: () => handleMergeBranchFromMenu(refName) },
