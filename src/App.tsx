@@ -79,7 +79,6 @@ const translations = {
     settingsLanguage: "Language",
     closeRepoTitle: "Close Repository?",
     closeRepoMessage: "This closes the current repository in the app. It will not delete local files or Git history.",
-    refresh: "Refresh repository changes",
     checkout: "Checkout:",
     merge: "Merge",
     mergeWith: "Merge with...",
@@ -269,7 +268,6 @@ const translations = {
     settingsLanguage: "介面語言",
     closeRepoTitle: "關閉儲存庫？",
     closeRepoMessage: "這只會在 App 中關閉目前儲存庫，不會刪除本地檔案或 Git 歷史記錄。",
-    refresh: "重新整理儲存庫狀態",
     checkout: "切換：",
     merge: "合併",
     mergeWith: "合併...",
@@ -1881,15 +1879,6 @@ export default function App() {
           >
             {isSyncing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <DownloadCloud className="h-3.5 w-3.5" />}
             <span>{t.fetch}</span>
-          </button>
-
-          {/* Quick status refresher */}
-          <button
-            onClick={refreshState}
-            title={t.refresh}
-            className="p-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 hover:text-slate-100 rounded border border-slate-700/80 transition-all cursor-pointer"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
           </button>
 
           {/* Checkout Selector */}
