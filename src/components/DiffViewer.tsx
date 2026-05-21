@@ -149,12 +149,12 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
           )}
         </div>
 
-        {/* AI Explainer column (Gemini magic) */}
+        {/* AI Explainer column */}
         <div className="w-full md:w-[320px] bg-slate-900 border-t md:border-t-0 md:border-l border-slate-800 flex flex-col overflow-y-auto shrink-0">
           <div className="p-4 border-b border-slate-800 bg-slate-950/30 flex items-center justify-between">
             <div className="flex items-center space-x-1.5">
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span className="text-xs font-bold text-slate-200">Gemini Diff Brain</span>
+              <span className="text-xs font-bold text-slate-200">AI Diff Brain</span>
             </div>
             {!explanation && !isExplaining && (
               <button
@@ -177,7 +177,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             {isExplaining ? (
               <div className="flex flex-col items-center justify-center py-12 text-slate-400 text-center">
                 <Loader2 className="h-7 w-7 animate-spin text-amber-500 mb-3" />
-                <p className="text-xs font-medium">Gemini is analyzing the diffs...</p>
+                <p className="text-xs font-medium">AI is analyzing the diffs...</p>
                 <p className="text-[10px] text-slate-500 max-w-[200px] mt-1.5">
                   Translating instructions and computing delta patterns.
                 </p>
@@ -211,7 +211,7 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-center text-slate-500">
                 <HelpCircle className="h-10 w-10 text-slate-700 mb-2" />
-                <h5 className="text-slate-400 text-xs font-medium">Ask Gemini for Advice</h5>
+                <h5 className="text-slate-400 text-xs font-medium">Ask AI for Advice</h5>
                 <p className="text-[10px] text-slate-500 max-w-[200px] mt-1">
                   Click 'Explain Diffs' to activate AI models explaining the changes, and what bugs to watch out for!
                 </p>

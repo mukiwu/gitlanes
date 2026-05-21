@@ -98,7 +98,7 @@ const translations = {
     popStash: "Pop Stash",
     stashPlaceholder: "Stash label message...",
     stash: "Stash",
-    geminiSuggestion: "Gemini Suggestion",
+    geminiSuggestion: "AI Suggestion",
     commitPlaceholder: "Write conventional commit message...",
     commitLabel: "Commit",
     closeLog: "Close Log",
@@ -137,7 +137,7 @@ const translations = {
     toastCommitRecorded: "Commit recorded in repository DAG log!",
     toastCommitFailed: "Failed to commit. Ensure changes are staged.",
     toastNoFilesStaged: "No files staged! Add or stage some modifications first before generating AI messages.",
-    toastAiCommitDone: "Gemini compiled a standard conventional commit message based on staged diff changes!",
+    toastAiCommitDone: "AI compiled a standard conventional commit message based on staged diff changes!",
     toastAiCommitFailed: "Could not generate commit message.",
     toastResetFailed: "Failed to reset.",
     toastRevertFailed: "Failed to revert commit.",
@@ -230,7 +230,7 @@ const translations = {
     popStash: "取出 Stash",
     stashPlaceholder: "Stash 標籤訊息...",
     stash: "Stash",
-    geminiSuggestion: "Gemini 建議",
+    geminiSuggestion: "AI 建議",
     commitPlaceholder: "輸入 conventional commit 訊息...",
     commitLabel: "Commit",
     closeLog: "關閉",
@@ -269,7 +269,7 @@ const translations = {
     toastCommitRecorded: "Commit 已記錄到儲存庫！",
     toastCommitFailed: "Commit 失敗。請確認變更已 stage。",
     toastNoFilesStaged: "尚未 stage 任何檔案！請先 stage 一些修改再產生 AI 訊息。",
-    toastAiCommitDone: "Gemini 已根據已 stage 的 diff 產生 conventional commit 訊息！",
+    toastAiCommitDone: "AI 已根據已 stage 的 diff 產生 conventional commit 訊息！",
     toastAiCommitFailed: "無法產生 commit 訊息。",
     toastResetFailed: "Reset 失敗。",
     toastRevertFailed: "Revert commit 失敗。",
@@ -1375,7 +1375,7 @@ export default function App() {
         </div>
 
         <footer className="py-4 text-center border-t border-slate-900 bg-slate-950 text-[11px] text-slate-600 font-mono">
-          Powered by Tauri, local Git, and Gemini
+          Powered by Tauri, local Git, and AI
         </footer>
       </div>
     );

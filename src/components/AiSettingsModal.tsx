@@ -158,13 +158,20 @@ export const AiSettingsModal: React.FC<AiSettingsModalProps> = ({ open, onClose,
   };
 
   const handleClearKey = async () => {
-    await fetch("/api/ai/settings/clear-key", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ provider }),
-    });
-    setHasKey(false);
-    setApiKey("");
+    try {
+      const res = await fetch("/api/ai/settings/clear-key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Clear failed");
+      setHasKey(false);
+      setApiKey("");
+    } catch (err) {
+      setTestState("fail");
+      setTestMessage(err instanceof Error ? err.message : String(err));
+    }
   };
 
   const handleModelDropdown = (value: string) => {
