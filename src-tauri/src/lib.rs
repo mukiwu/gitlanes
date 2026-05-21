@@ -57,12 +57,19 @@ struct GitFile {
 }
 
 #[derive(Debug, Serialize)]
+struct GitRef {
+    name: String,
+    kind: String, // "head" | "branch" | "tag" | "remote"
+}
+
+#[derive(Debug, Serialize)]
 struct CommitNode {
     hash: String,
     parents: Vec<String>,
     author: String,
     date: String,
     message: String,
+    refs: Vec<GitRef>,
 }
 
 #[derive(Debug, Serialize)]
@@ -374,6 +381,51 @@ async fn git_commit(state: State<'_, AppState>, message: String) -> Result<serde
     Ok(json!({ "success": true, "message": result.stdout }))
 }
 
+fn parse_refs(decoration: &str) -> Vec<GitRef> {
+    let trimmed = decoration.trim().trim_start_matches('(').trim_end_matches(')').trim();
+    if trimmed.is_empty() {
+        return Vec::new();
+    }
+    trimmed
+        .split(", ")
+        .filter_map(|token| {
+            let token = token.trim();
+            if token.is_empty() {
+                return None;
+            }
+            if let Some(rest) = token.strip_prefix("HEAD -> ") {
+                return Some(GitRef { name: rest.trim().to_string(), kind: "head".to_string() });
+            }
+            if token == "HEAD" {
+                return Some(GitRef { name: "HEAD".to_string(), kind: "head".to_string() });
+            }
+            if let Some(rest) = token.strip_prefix("tag: ") {
+                return Some(GitRef { name: rest.trim().to_string(), kind: "tag".to_string() });
+            }
+            // Heuristic: local branch namespaces use slash (feature/, fix/, chore/, etc.)
+            // Remote tracking refs use a remote name prefix (origin/, upstream/, etc.)
+            // With --decorate=short we can't know remote names, so we classify as remote
+            // only when the prefix before '/' looks like a simple remote name (no nested slashes
+            // and not a well-known branch namespace prefix).
+            const BRANCH_NAMESPACES: &[&str] = &[
+                "feature", "fix", "bugfix", "hotfix", "release", "chore",
+                "refactor", "docs", "test", "ci", "perf", "revert",
+            ];
+            let kind = if let Some(slash_pos) = token.find('/') {
+                let prefix = &token[..slash_pos];
+                if BRANCH_NAMESPACES.contains(&prefix) {
+                    "branch"
+                } else {
+                    "remote"
+                }
+            } else {
+                "branch"
+            };
+            Some(GitRef { name: token.to_string(), kind: kind.to_string() })
+        })
+        .collect()
+}
+
 #[tauri::command]
 async fn git_log(state: State<'_, AppState>, limit: Option<usize>, skip: Option<usize>, all_branches: Option<bool>) -> Result<serde_json::Value, String> {
     let repo_path = match current_repo_path(&state) {
@@ -391,7 +443,7 @@ async fn git_log(state: State<'_, AppState>, limit: Option<usize>, skip: Option<
         "log",
         "--topo-order",
         "--decorate=short",
-        "--pretty=format:%h|%p|%an|%ad|%s",
+        "--pretty=format:%h|%p|%an|%ad|%d|%s",
         "--date=format-local:%Y-%m-%d %H:%M",
         max_count.as_str(),
         skip_arg.as_str(),
@@ -414,7 +466,8 @@ async fn git_log(state: State<'_, AppState>, limit: Option<usize>, skip: Option<
                 parents: parts.get(1).unwrap_or(&"").split_whitespace().map(String::from).collect(),
                 author: parts.get(2).unwrap_or(&"").trim().to_string(),
                 date: parts.get(3).unwrap_or(&"").trim().to_string(),
-                message: parts.get(4).unwrap_or(&"").trim().to_string(),
+                refs: parse_refs(parts.get(4).unwrap_or(&"")),
+                message: parts.get(5..).map(|rest| rest.join("|")).unwrap_or_default().trim().to_string(),
             }
         })
         .collect::<Vec<_>>();
@@ -754,6 +807,39 @@ async fn ai_test_connection() -> Result<serde_json::Value, String> {
     {
         Ok(_) => Ok(json!({ "ok": true })),
         Err(message) => Ok(json!({ "ok": false, "message": message })),
+    }
+}
+
+#[cfg(test)]
+mod ref_tests {
+    use super::*;
+
+    #[test]
+    fn parses_head_branch_tag_remote() {
+        let refs = parse_refs(" (HEAD -> main, tag: v1.0, origin/main, feature/x)");
+        assert_eq!(refs.len(), 4);
+        assert_eq!(refs[0].name, "main");
+        assert_eq!(refs[0].kind, "head");
+        assert_eq!(refs[1].name, "v1.0");
+        assert_eq!(refs[1].kind, "tag");
+        assert_eq!(refs[2].name, "origin/main");
+        assert_eq!(refs[2].kind, "remote");
+        assert_eq!(refs[3].name, "feature/x");
+        assert_eq!(refs[3].kind, "branch");
+    }
+
+    #[test]
+    fn empty_decoration_yields_no_refs() {
+        assert!(parse_refs("").is_empty());
+        assert!(parse_refs("   ").is_empty());
+    }
+
+    #[test]
+    fn detached_head_alone() {
+        let refs = parse_refs(" (HEAD)");
+        assert_eq!(refs.len(), 1);
+        assert_eq!(refs[0].name, "HEAD");
+        assert_eq!(refs[0].kind, "head");
     }
 }
 
