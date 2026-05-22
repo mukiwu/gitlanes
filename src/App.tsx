@@ -1384,7 +1384,7 @@ export default function App() {
   const handlePush = () => runSync("/api/git/push", t.toastPushDone, "Push failed");
   const handleFetch = () => runSync("/api/git/fetch", t.toastFetchDone, "Fetch failed");
 
-  const APP_VERSION = "0.1.0";
+  const APP_VERSION = "0.1.1";
 
   const checkForUpdate = async (opts?: { silent?: boolean }) => {
     try {
