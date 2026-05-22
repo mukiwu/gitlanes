@@ -23,7 +23,7 @@ fi
 # 2. Build with signing + updater key in env
 export TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.gitlanes/updater-key.json)
 echo "→ Building..."
-npm run tauri build -- --target aarch64-apple-darwin
+npx tauri build --target aarch64-apple-darwin
 
 APP_PATH="src-tauri/target/aarch64-apple-darwin/release/bundle/macos/GitLanes.app"
 DMG_PATH="src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/GitLanes_${VERSION}_aarch64.dmg"
