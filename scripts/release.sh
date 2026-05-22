@@ -22,6 +22,8 @@ fi
 
 # 2. Build with signing + updater key in env
 export TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.gitlanes/updater-key.json)
+# Key was generated without a password — explicitly empty so the CLI doesn't try to prompt.
+export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=""
 echo "→ Building..."
 npx tauri build --target aarch64-apple-darwin
 
