@@ -37,6 +37,10 @@
     "active": true,
     "targets": "all",
     "createUpdaterArtifacts": true,
-    "icon": []
+    "icon": [],
+    "macOS": {
+      "signingIdentity": "Developer ID Application: TZU YING WU (62629DYRU8)",
+      "entitlements": "entitlements.plist"
+    }
   }
 }
